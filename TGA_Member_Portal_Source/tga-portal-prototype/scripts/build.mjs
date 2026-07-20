@@ -16,7 +16,7 @@ await build({
   format: 'esm',
   target: ['es2022'],
   minify: true,
-  sourcemap: true,
+  sourcemap: false,
   outfile: 'dist/client/app.js',
   assetNames: 'assets/[name]-[hash]',
   loader: {
