@@ -34,6 +34,8 @@ npm run build
 
 The static deployment output is written to `dist/`.
 
+The generated `dist/` output is committed intentionally because the connected Cloudflare Workers build currently runs only `npx wrangler deploy`. The repository-root `wrangler.jsonc` publishes that prebuilt output without requiring dashboard changes.
+
 ## Cloudflare deployment
 
 Authenticate Wrangler for the intended Cloudflare account, then run:
@@ -43,6 +45,8 @@ npm run deploy
 ```
 
 `wrangler.jsonc` publishes `dist/` through Cloudflare Workers Static Assets with SPA fallback handling.
+
+When frontend source changes, run `npm run build` and commit the refreshed `dist/` output before pushing so Cloudflare's repository-root deploy remains reproducible.
 
 ## Demo credentials
 

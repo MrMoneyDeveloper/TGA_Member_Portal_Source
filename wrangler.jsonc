@@ -1,0 +1,8 @@
+{
+  "name": "tga-static-frontend",
+  "compatibility_date": "2026-07-20",
+  "assets": {
+    "directory": "./TGA_Member_Portal_Source/tga-portal-prototype/dist/client",
+    "not_found_handling": "single-page-application"
+  }
+}
