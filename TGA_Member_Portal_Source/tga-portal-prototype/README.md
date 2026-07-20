@@ -1,30 +1,21 @@
-# The Gun Association (TGA) Portal Prototype
+# The Gun Association static frontend
 
-A working front-end prototype for a South African association portal/CRM covering member management, online assessments, document workflows, payments, and chatbot support.
+A lightweight, mobile-first public website and member/admin portal prototype built with semantic HTML, vanilla JavaScript modules and vanilla CSS. It does not use React, Vue, Next.js or a backend framework.
 
-## What is included
+## Frontend stack
 
-- Public marketing and membership application journey
-- Demo member and administrator authentication
-- Member profile and digital membership card
-- Document upload and review states
-- Online assessment with automatic scoring
-- Membership payment and receipt screens
-- Admin dashboard, member register, filters, record review, and status updates
-- Document review queue
-- Assessment and payment reporting
-- Embedded support chatbot
-- Responsive layout for desktop, tablet, and mobile
-- GitHub Pages deployment workflow
+- HTML5 and accessible native controls
+- Vanilla JavaScript / ES modules
+- Vanilla CSS with CSS Grid, Flexbox and Bootstrap 5.3.8 utilities
+- GSAP 3.15.0 with ScrollTrigger and Flip
+- Lenis 1.3.25 smooth scrolling
+- Three.js 0.185.1 WebGL particles, orbitals, lighting and cursor response
+- Rive WebGL 2.38.5 with an honest missing-asset fallback
+- Iconify Icon 3.0.2 using Solar interface icons
+- esbuild 0.28.1 for a single browser-safe JavaScript bundle
+- Wrangler 4.112.0 and Cloudflare Workers Static Assets
 
-## Demo credentials
-
-| Role | Email | Password |
-|---|---|---|
-| Member | `member@tga.co.za` | `demo123` |
-| Administrator | `admin@tga.co.za` | `admin123` |
-
-Authentication is intentionally simulated. The login form directs `admin@...` or the password `admin123` to the admin portal; all other demo credentials open the member portal.
+The project includes original lazy-loaded PNG gallery imagery, a CSS noise layer, spotlight cards, GSAP flip cards, a two-part member journey, an audio-ready chapter dock and responsive public/member/admin layouts.
 
 ## Run locally
 
@@ -33,93 +24,48 @@ npm install
 npm run dev
 ```
 
-Open the local URL shown by Vite.
+The Wrangler preview runs at `http://127.0.0.1:5173`.
 
-## Build
+## Production build
 
 ```bash
 npm run build
-npm run preview
 ```
 
-## Deploy with GitHub Pages
+The static deployment output is written to `dist/`.
 
-1. Push the repository to GitHub with `main` as the default branch.
-2. In **Settings → Pages**, select **GitHub Actions** as the source.
-3. Push a commit or run the **Deploy TGA portal to GitHub Pages** workflow manually.
+## Cloudflare deployment
 
-The workflow builds the Vite project and deploys the `dist` directory.
+Authenticate Wrangler for the intended Cloudflare account, then run:
 
-## Important prototype limitations
-
-This repository is for discovery, stakeholder review, and UI validation. It is **not production ready**.
-
-- No real authentication, password storage, MFA, or role enforcement
-- No database or server-side API
-- Uploaded file contents are not retained; only safe metadata is stored in browser `localStorage`
-- No real PayFast transaction is created
-- No real AI provider is connected
-- No legal or licensing advice is provided by the chatbot
-- Prices, member records, results, and metrics are illustrative
-
-## Recommended production architecture
-
-```text
-Browser / mobile web app
-        │
-        ▼
-React or Next.js application
-        │
-        ├── Authentication and RBAC
-        ├── Member and CRM API
-        ├── Assessment service
-        ├── Document service + malware scanning
-        ├── Payment service + PayFast ITN handler
-        ├── Notification service
-        └── AI support gateway + human escalation
-        │
-        ▼
-PostgreSQL + private object storage + audit log
+```bash
+npm run deploy
 ```
 
-### Production requirements
+`wrangler.jsonc` publishes `dist/` through Cloudflare Workers Static Assets with SPA fallback handling.
 
-- Server-side authentication with MFA for administrators
-- Role-based access controls and least-privilege permissions
-- Encryption in transit and at rest
-- Private object storage, signed download URLs, file type validation, and malware scanning
-- PayFast server-side signature generation and Instant Transaction Notification validation
-- Idempotent payment processing and immutable transaction history
-- Consent records, data retention rules, access logs, and POPIA-aligned privacy processes
-- Versioned assessments and immutable attempt results
-- Email/SMS notifications and renewal reminders
-- Backups, monitoring, incident response, and disaster recovery
+## Demo credentials
 
-## Suggested delivery phases
+| Role | Email | Password |
+|---|---|---|
+| Member | `member@tga.co.za` | `demo123` |
+| Administrator | `admin@tga.co.za` | `admin123` |
 
-1. **Discovery and design:** Confirm membership types, workflows, required documents, assessments, roles, reports, and service-level targets.
-2. **MVP:** Secure accounts, member CRM, document uploads, admin review, assessments, PayFast sandbox, email notifications, and core reporting.
-3. **Operational release:** Production payments, audit exports, renewals, case management, consulting requests, chatbot knowledge base, and support handover.
-4. **Enhancements:** Mobile app/PWA, digital credentials, automation, analytics, integrations, and advanced AI assistance.
+## Optional production assets
 
-## Source structure
+The interface detects these files and activates their controls when supplied:
 
-```text
-src/
-  App.jsx
-  data.js
-  styles.css
-  components/
-    AdminPortal.jsx
-    Brand.jsx
-    Chatbot.jsx
-    Login.jsx
-    MemberPortal.jsx
-    Modal.jsx
-    PortalShell.jsx
-.github/workflows/deploy-pages.yml
-```
+- `public/assets/tga-journey.riv`
+- `public/audio/part-1.mp3`
+- `public/audio/part-2.mp3`
 
-## Safety and compliance note
+Until approved files are supplied, the Rive frame and audio dock clearly state that assets are pending instead of simulating real content.
 
-The prototype focuses on association administration, member safety, compliance records, and authorised support. It must not be used to provide automated case-specific legal advice or unsafe operational guidance.
+## Prototype limitations
+
+- Authentication and role checks are simulated in the browser.
+- Application data is not transmitted or stored.
+- Uploaded file contents are not retained; safe display metadata can be stored locally.
+- Payments, notifications, receipts, exports and chatbot responses are simulated.
+- Prices, people, records and metrics are illustrative.
+- Privacy wording requires legal review before publication.
