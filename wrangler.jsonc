@@ -1,6 +1,10 @@
 {
-  "name": "tga-static-frontend",
+  "name": "tgamemberportalsource",
   "compatibility_date": "2026-07-20",
+  "build": {
+    "command": "npm ci && npm run build",
+    "cwd": "./TGA_Member_Portal_Source/tga-portal-prototype"
+  },
   "assets": {
     "directory": "./TGA_Member_Portal_Source/tga-portal-prototype/dist/client",
     "not_found_handling": "single-page-application"
