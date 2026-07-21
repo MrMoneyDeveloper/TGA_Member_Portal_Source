@@ -36,9 +36,9 @@ function initialiseWebGL(canvas, reducedMotion) {
   const particleCount = compact ? 260 : 680;
   const positions = new Float32Array(particleCount * 3);
   const colours = new Float32Array(particleCount * 3);
-  const brass = new THREE.Color('#b5955b');
-  const steel = new THREE.Color('#8c969d');
-  const olive = new THREE.Color('#69725a');
+  const brass = new THREE.Color('#ffd100');
+  const steel = new THREE.Color('#ffffff');
+  const olive = new THREE.Color('#d3131d');
 
   for (let index = 0; index < particleCount; index += 1) {
     const radius = 1.2 + Math.random() * 3.4;
@@ -59,7 +59,7 @@ function initialiseWebGL(canvas, reducedMotion) {
   const particles = new THREE.Points(geometry, particleMaterial);
   group.add(particles);
 
-  const ringMaterial = new THREE.MeshBasicMaterial({ color: '#b5955b', transparent: true, opacity: 0.34 });
+  const ringMaterial = new THREE.MeshBasicMaterial({ color: '#d3131d', transparent: true, opacity: 0.42 });
   const rings = [1.25, 2.05, 2.85].map((radius, index) => {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.012 + index * 0.003, 8, 96), ringMaterial.clone());
     ring.rotation.set(1.08 + index * 0.08, 0.22 - index * 0.12, index * 0.35);
@@ -71,7 +71,7 @@ function initialiseWebGL(canvas, reducedMotion) {
     new THREE.Vector3(-3.8, 0.8, -0.4), new THREE.Vector3(3.8, 0.8, -0.4),
     new THREE.Vector3(0.9, -2.6, 0.2), new THREE.Vector3(0.9, 2.6, 0.2)
   ]);
-  const lines = new THREE.LineSegments(lineGeometry, new THREE.LineBasicMaterial({ color: '#8c969d', transparent: true, opacity: 0.16 }));
+  const lines = new THREE.LineSegments(lineGeometry, new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.14 }));
   group.add(lines);
 
   const cursor = { x: 0, y: 0 };

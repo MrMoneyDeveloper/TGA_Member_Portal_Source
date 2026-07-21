@@ -49,7 +49,7 @@ Final public images are center-cropped to 3:2 and supplied as 640, 960 and 1536 
 ### `og.png`
 
 - Placement: Open Graph and X/Twitter social preview when a verified `SITE_URL` is supplied.
-- Prompt: complete 1200×630 premium association campaign card using the gunmetal, olive, steel, brass and off-white system; controlled range instruction; technical grid and precision rings; exact text “THE GUN ASSOCIATION” and “RESPONSIBLE OWNERSHIP. PROFESSIONAL SUPPORT.”
+- Prompt: edit the approved prototype card into a high-contrast black, red, yellow and white campaign treatment; preserve the controlled range instruction scene and exact text; add small decorative firearm silhouettes and bullet-shaped technical markers only within the abstract grid and border areas.
 - Validation: required wording rendered correctly with no extra text.
 - Status: prototype — brand and safety approval required.
 
