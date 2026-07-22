@@ -15,6 +15,7 @@ import {
   paymentContent,
   portalTemplate,
   privacyContent,
+  publicRoutes,
   publicTemplate,
   termsContent,
   uploadContent
@@ -49,8 +50,16 @@ function storedDocuments() {
 }
 
 const storedResult = storage.get('tga-test-result');
+const normalizePath = (path = '/') => {
+  const normalized = `/${String(path).replace(/^\/+|\/+$/g, '')}`;
+  return normalized === '//' ? '/' : normalized;
+};
+const initialPath = normalizePath(window.location.pathname);
+const initialScreen = initialPath === '/login' || initialPath === '/portal' ? 'login' : 'public';
 const state = {
-  screen: 'public',
+  screen: initialScreen,
+  publicPath: initialScreen === 'public' ? initialPath : '/',
+  authenticated: false,
   role: 'member',
   active: 'overview',
   memberQuery: '',
@@ -59,6 +68,8 @@ const state = {
   documents: storedDocuments(),
   testResult: storedResult === null ? null : Number(storedResult)
 };
+
+if (initialPath === '/portal') window.history.replaceState(null, '', '/login');
 
 function filteredMembers() {
   const query = state.memberQuery.trim().toLowerCase();
@@ -76,21 +87,78 @@ function bindDialogBehaviour(dialog, triggerSelector) {
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
 }
 
-function render({ preserveScroll = false } = {}) {
+function updatePageMetadata() {
+  const route = publicRoutes[state.publicPath];
+  const metadata = state.screen === 'portal'
+    ? { title: `${state.role === 'admin' ? 'Administrator' : 'Member'} portal | The Gun Association`, description: 'TGA stakeholder demonstration portal.' }
+    : state.screen === 'login'
+      ? { title: 'Member login | The Gun Association', description: 'Access the TGA stakeholder demonstration member and administrator portals.' }
+      : route || { title: 'Page not found | The Gun Association', description: 'The requested TGA prototype page could not be found.' };
+
+  document.title = metadata.title;
+  document.querySelector('meta[name="description"]')?.setAttribute('content', metadata.description);
+  document.querySelector('meta[property="og:title"]')?.setAttribute('content', metadata.title);
+  document.querySelector('meta[property="og:description"]')?.setAttribute('content', metadata.description);
+  document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', metadata.title);
+  document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', metadata.description);
+
+  if (publicConfig.siteUrl && state.screen === 'public' && route) {
+    const canonicalUrl = `${publicConfig.siteUrl}${state.publicPath === '/' ? '/' : state.publicPath}`;
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.append(canonical);
+    }
+    canonical.href = canonicalUrl;
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonicalUrl);
+  }
+}
+
+function restorePublicPosition(focusMain, preserveScroll) {
+  if (state.screen !== 'public') return;
+  window.requestAnimationFrame(() => {
+    const heading = document.querySelector('#main-content h1');
+    if (focusMain) heading?.focus({ preventScroll: true });
+    const hash = decodeURIComponent(window.location.hash.slice(1));
+    const target = hash ? document.getElementById(hash) : null;
+    if (target) target.scrollIntoView({ block: 'start', behavior: 'instant' });
+    else if (!preserveScroll) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  });
+}
+
+function render({ preserveScroll = false, focusMain = false } = {}) {
   destroyViewEffects();
-  if (state.screen === 'public') app.innerHTML = publicTemplate(publicConfig.demoMode);
+  if (state.screen === 'public') app.innerHTML = publicTemplate(state.publicPath, publicConfig.demoMode);
   if (state.screen === 'login') app.innerHTML = loginTemplate(storage.get('tga-remember-email', ''), publicConfig.demoMode);
   if (state.screen === 'portal') app.innerHTML = portalTemplate(state, filteredMembers());
   document.body.dataset.screen = state.screen;
-  document.title = state.screen === 'portal'
-    ? `${state.role === 'admin' ? 'Administrator' : 'Member'} portal | The Gun Association`
-    : state.screen === 'login'
-      ? 'Member login | The Gun Association'
-      : 'The Gun Association | Membership, Training and Compliance Support';
-  if (!preserveScroll) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  updatePageMetadata();
+  if (state.screen !== 'public' && !preserveScroll) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   initialiseViewEffects(state.screen);
+  restorePublicPosition(focusMain, preserveScroll);
   const drawer = document.querySelector('#portal-mobile-dialog');
   if (drawer) bindDialogBehaviour(drawer, '[data-action="open-portal-menu"]');
+}
+
+function updateHistory(path, replace = false) {
+  window.history[replace ? 'replaceState' : 'pushState'](null, '', path);
+}
+
+function navigatePublic(href = '/', { replace = false, focusMain = true } = {}) {
+  const url = new URL(href, window.location.href);
+  state.screen = 'public';
+  state.publicPath = normalizePath(url.pathname);
+  state.active = 'overview';
+  updateHistory(`${state.publicPath}${url.hash}`, replace);
+  render({ focusMain });
+}
+
+function navigateLogin({ replace = false, focusMain = true } = {}) {
+  state.screen = 'login';
+  updateHistory('/login', replace);
+  render();
+  if (focusMain) window.requestAnimationFrame(() => document.querySelector('#main-content h1, #main-content h2')?.focus?.({ preventScroll: true }));
 }
 
 function showDialog(title, content) {
@@ -131,7 +199,9 @@ function openPortal(role) {
   state.role = role;
   state.active = role === 'admin' ? 'dashboard' : 'overview';
   state.screen = 'portal';
+  state.authenticated = true;
   closeDialog();
+  updateHistory('/portal');
   render();
 }
 
@@ -172,15 +242,25 @@ function chatReply(message) {
 document.addEventListener('click', (event) => {
   const actionTarget = event.target.closest('[data-action]');
   const action = actionTarget?.dataset.action;
+  const routeTarget = event.target.closest('a[data-route]');
+
+  if (routeTarget && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+    const url = new URL(routeTarget.href, window.location.href);
+    if (url.origin === window.location.origin) {
+      event.preventDefault();
+      navigatePublic(`${url.pathname}${url.hash}`);
+      return;
+    }
+  }
 
   if (event.target === siteDialog) closeDialog(siteDialog);
   if (event.target === noticeDialog) closeDialog(noticeDialog);
   if (event.target.closest('[data-close-dialog]')) closeDialog(siteDialog);
   if (event.target.closest('[data-close-notice]')) closeDialog(noticeDialog);
 
-  if (action === 'home') { event.preventDefault(); state.screen = 'public'; state.active = 'overview'; render(); }
-  if (action === 'login') { closeDialog(); state.screen = 'login'; render(); }
-  if (action === 'logout') { state.screen = 'public'; state.active = 'overview'; render(); }
+  if (action === 'home') { event.preventDefault(); navigatePublic('/'); }
+  if (action === 'login') { closeDialog(); navigateLogin(); }
+  if (action === 'logout') { state.authenticated = false; navigatePublic('/'); }
   if (action === 'apply') showDialog('Start a TGA application', applicationContent());
   if (action === 'privacy') showNotice('Prototype privacy and POPIA notice', privacyContent());
   if (action === 'terms') showNotice('Prototype terms', termsContent());
@@ -400,6 +480,27 @@ window.addEventListener('resize', () => {
     if (menu) menu.hidden = true;
     document.body.classList.remove('dialog-open');
   }
+});
+
+window.addEventListener('popstate', () => {
+  const path = normalizePath(window.location.pathname);
+  if (path === '/login') {
+    state.screen = 'login';
+    render();
+    return;
+  }
+  if (path === '/portal') {
+    if (state.authenticated) {
+      state.screen = 'portal';
+      render();
+    } else {
+      navigateLogin({ replace: true });
+    }
+    return;
+  }
+  state.screen = 'public';
+  state.publicPath = path;
+  render({ focusMain: true });
 });
 
 bindDialogBehaviour(siteDialog, '[data-close-dialog]');

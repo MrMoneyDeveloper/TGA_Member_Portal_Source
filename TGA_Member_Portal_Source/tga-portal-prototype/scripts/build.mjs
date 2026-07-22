@@ -9,6 +9,7 @@ const rawSiteUrl = String(process.env.SITE_URL || '').trim().replace(/\/$/, '');
 const siteUrl = /^https?:\/\//.test(rawSiteUrl) ? rawSiteUrl : '';
 const publicIndex = process.env.PUBLIC_INDEX === 'true' && Boolean(siteUrl);
 const demoMode = process.env.DEMO_MODE !== 'false';
+const publicRoutes = ['/', '/about', '/membership', '/training', '/resources', '/contact'];
 
 await rm(outdir, { recursive: true, force: true });
 await mkdir(clientDir, { recursive: true });
@@ -63,7 +64,10 @@ await writeFile(path.join(clientDir, 'robots.txt'), publicIndex
   : 'User-agent: *\nDisallow: /\n');
 
 if (publicIndex) {
-  await writeFile(path.join(clientDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${siteUrl}/</loc><changefreq>monthly</changefreq></url></urlset>\n`);
+  const entries = publicRoutes
+    .map((route) => `  <url><loc>${siteUrl}${route}</loc><changefreq>monthly</changefreq></url>`)
+    .join('\n');
+  await writeFile(path.join(clientDir, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`);
 }
 
 await mkdir(path.join(outdir, 'server'), { recursive: true });

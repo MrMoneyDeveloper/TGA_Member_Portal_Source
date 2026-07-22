@@ -20,6 +20,19 @@ The experience promotes responsible ownership, safety, secure storage, training 
 
 No React, Vue, Next.js, backend framework or database is used.
 
+## Public pages
+
+The public website uses a small History API router with Cloudflare SPA fallback. Direct visits, refreshes and browser Back/Forward are supported for:
+
+- `/` — concise overview and service previews
+- `/about` — association positioning, pillars and review placeholders
+- `/membership` — benefits, member journey and illustrative plans
+- `/training` — learning pathways and assessments
+- `/resources` — compliance, responsible ownership, secure storage and FAQ
+- `/contact` — general, membership and professional-support placeholders
+
+`/login` opens the demonstration sign-in screen. An authenticated in-memory demo session uses `/portal`; directly opening or refreshing that path returns to login because no production authentication exists.
+
 ## Project layout
 
 ```text

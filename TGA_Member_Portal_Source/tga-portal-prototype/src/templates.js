@@ -40,106 +40,161 @@ function sectionHeading(eyebrow, title, text, id = '') {
   return `<header class="section-heading" ${id ? `id="${id}"` : ''} data-reveal>${weaponMark('section-weapon-mark')}<span class="eyebrow">${eyebrow}</span><h2>${title}</h2>${text ? `<p>${text}</p>` : ''}</header>`;
 }
 
-function publicNavigation(mobile = false) {
-  const links = [
-    ['#top', 'Home'], ['#about', 'About TGA'], ['#membership', 'Membership'], ['#training', 'Training'],
-    ['#assessments', 'Assessments'], ['#compliance', 'Compliance'], ['#resources', 'Resources'], ['#contact', 'Contact']
-  ];
-  return `<nav class="${mobile ? 'mobile-navigation' : 'desktop-navigation'}" aria-label="${mobile ? 'Mobile' : 'Primary'} navigation">
-    ${mobile ? links.map(([href, label]) => `<a href="${href}">${label}</a>`).join('') : `
-      <a href="#top">Home</a><a href="#about">About TGA</a><a href="#membership">Membership</a><a href="#training">Training</a>
-      <details class="nav-dropdown"><summary>Resources ${icon('solar:alt-arrow-down-linear')}</summary><div><a href="#assessments">Assessments</a><a href="#compliance">Compliance</a><a href="#resources">Responsible ownership</a><a href="#faq">FAQ</a></div></details>
-      <a href="#contact">Contact</a>`}
-    ${mobile ? '<button class="button button--outline" data-action="login">Member login</button><button class="button button--brass" data-action="apply">Join TGA</button>' : ''}
+export const publicRoutes = Object.freeze({
+  '/': {
+    label: 'Home',
+    title: 'The Gun Association | Membership, Training and Compliance Support',
+    description: 'Responsible ownership, professional support and secure digital member services for South Africa’s firearm community.'
+  },
+  '/about': {
+    label: 'About TGA',
+    title: 'About The Gun Association | Responsible Member Support',
+    description: 'Learn how The Gun Association proposes to support responsible, informed and connected firearm-community members.'
+  },
+  '/membership': {
+    label: 'Membership',
+    title: 'TGA Membership | Benefits, Journey and Illustrative Plans',
+    description: 'Explore the proposed TGA member journey, benefits and illustrative membership options.'
+  },
+  '/training': {
+    label: 'Training',
+    title: 'Training and Assessments | The Gun Association',
+    description: 'Explore proposed firearm-safety learning pathways, competency information and online member assessments.'
+  },
+  '/resources': {
+    label: 'Resources',
+    title: 'Responsible Ownership and Compliance Resources | TGA',
+    description: 'General resources for responsible ownership, secure storage, document handling, assessments and compliance support.'
+  },
+  '/contact': {
+    label: 'Contact',
+    title: 'Contact The Gun Association | Member and Professional Support',
+    description: 'Find the proposed contact pathways for general enquiries, membership support and professional assistance.'
+  }
+});
+
+const navigationLinks = Object.entries(publicRoutes).map(([path, route]) => [path, route.label]);
+const serviceRoutes = ['/membership', '/training', '/training#assessments', '/resources#compliance', '/contact#professional-assistance', '/contact'];
+const memberBenefits = [
+  ['solar:user-id-linear', 'One member record', 'Keep membership administration and progress together in one clear experience.'],
+  ['solar:route-linear', 'Visible requirements', 'Understand what is required, what is complete and what should happen next.'],
+  ['solar:folder-open-linear', 'Self-service access', 'Reach documents, assessments, payments and receipts through the member portal.'],
+  ['solar:chat-round-call-linear', 'Human escalation', 'Move from general support to appropriately qualified professional assistance when needed.']
+];
+
+function routeLink(path, label, currentPath, className = '') {
+  const current = path === currentPath ? ' aria-current="page"' : '';
+  return `<a href="${path}" data-route${current}${className ? ` class="${className}"` : ''}>${label}</a>`;
+}
+
+function publicNavigation(currentPath, mobile = false) {
+  const links = navigationLinks.map(([path, label]) => routeLink(path, label, currentPath)).join('');
+  if (mobile) {
+    return `<nav class="mobile-navigation" aria-label="Mobile navigation">
+      ${links}
+      ${routeLink('/resources#assessments', 'Assessments', currentPath)}
+      ${routeLink('/resources#compliance', 'Compliance', currentPath)}
+      <button class="button button--outline" data-action="login">Member login</button><button class="button button--brass" data-action="apply">Join TGA</button>
+    </nav>`;
+  }
+  return `<nav class="desktop-navigation" aria-label="Primary navigation">
+    ${routeLink('/', 'Home', currentPath)}${routeLink('/about', 'About TGA', currentPath)}${routeLink('/membership', 'Membership', currentPath)}${routeLink('/training', 'Training', currentPath)}
+    <details class="nav-dropdown"><summary ${currentPath === '/resources' ? 'aria-current="page"' : ''}>Resources ${icon('solar:alt-arrow-down-linear')}</summary><div><a href="/resources" data-route>Resources overview</a>${routeLink('/resources#assessments', 'Assessments', currentPath)}${routeLink('/resources#compliance', 'Compliance', currentPath)}${routeLink('/resources#ownership', 'Responsible ownership', currentPath)}${routeLink('/resources#faq', 'FAQ', currentPath)}</div></details>
+    ${routeLink('/contact', 'Contact', currentPath)}
   </nav>`;
 }
 
-export function publicTemplate(demoMode = true) {
-  return `<div class="public-site" id="top">
-    <div class="announcement" role="note"><div class="site-container"><span>Responsible ownership</span><span>Training</span><span>Compliance</span><span>Membership support</span>${demoMode ? '<b>Prototype for stakeholder review</b>' : ''}</div></div>
-    <header class="public-header">
-      <div class="site-container header-inner"><a class="brand-link" href="#top" aria-label="The Gun Association home">${logo()}</a>
-        ${weaponMark('nav-weapon-mark')}
-        ${publicNavigation()}
-        <div class="header-actions"><button class="text-action" data-action="login">Member login</button><button class="button button--brass" data-action="apply">Join TGA</button></div>
-        <button class="menu-button" type="button" data-action="toggle-public-menu" aria-controls="public-mobile-menu" aria-expanded="false" aria-label="Open website menu">${icon('solar:hamburger-menu-linear')}</button>
-      </div>
-      <div id="public-mobile-menu" class="public-mobile-menu" hidden>${publicNavigation(true)}</div>
-    </header>
+function publicHeader(currentPath, demoMode) {
+  return `<div class="announcement" role="note"><div class="site-container"><span>Responsible ownership</span><span>Training</span><span>Compliance</span><span>Membership support</span>${demoMode ? '<b>Prototype for stakeholder review</b>' : ''}</div></div>
+  <header class="public-header">
+    <div class="site-container header-inner"><a href="/" data-route class="brand-link" aria-label="The Gun Association home">${logo()}</a> ${weaponMark('nav-weapon-mark')}
+      ${publicNavigation(currentPath)}
+      <div class="header-actions"><button class="text-action" data-action="login">Member login</button><button class="button button--brass" data-action="apply">Join TGA</button></div>
+      <button class="menu-button" type="button" data-action="toggle-public-menu" aria-controls="public-mobile-menu" aria-expanded="false" aria-label="Open website menu">${icon('solar:hamburger-menu-linear')}</button>
+    </div>
+    <div id="public-mobile-menu" class="public-mobile-menu" hidden>${publicNavigation(currentPath, true)}</div>
+  </header>`;
+}
 
-    <main id="main-content">
-      <section class="hero" aria-labelledby="hero-title">
-        ${picture(imageAssets.hero, 'hero-media', true)}<div class="hero-shade"></div><canvas data-webgl-scene aria-hidden="true"></canvas>
-        <div class="technical-grid" aria-hidden="true"></div>
-        <div class="site-container hero-content"><div class="hero-copy" data-reveal>
-          <span class="eyebrow">South African member experience prototype</span>
-          <h1 id="hero-title">Responsible Ownership.<br><em>Professional Support.</em><br>One Trusted Association.</h1>
-          <p>Membership, training, assessments, compliance support and secure digital services for South Africa's firearm community.</p>
-          <div class="hero-weapon-rail" role="note">${icon('mdi:pistol')}<span>Precision <b>•</b> Discipline <b>•</b> Responsibility</span>${icon('mdi:bullet')}${icon('mdi:bullet')}${icon('mdi:bullet')}</div>
-          <div class="hero-actions"><button class="button button--brass" data-action="apply">Join TGA ${icon('solar:arrow-right-linear')}</button><button class="button button--glass" data-action="login">Access member portal</button></div>
-          <ul class="hero-trust" aria-label="Prototype trust indicators"><li>${icon('solar:shield-check-linear')} Responsible participation</li><li>${icon('solar:lock-keyhole-linear')} Privacy-led design</li><li>${icon('solar:map-point-linear')} South African context</li></ul>
-        </div></div>
-      </section>
+function publicFooter(demoMode) {
+  return `<footer class="public-footer"><div class="site-container footer-weapon-line" aria-hidden="true">${icon('mdi:pistol')}<span></span>${icon('mdi:bullet')}${icon('mdi:bullet')}${icon('mdi:bullet')}</div><div class="site-container footer-grid"><div>${logo()}<p>A responsible, member-first digital experience${demoMode ? ' prototype for stakeholder review' : ''}.</p><p class="footer-responsibility">Safe handling, secure storage, ongoing training and lawful compliance remain the responsibility of every firearm owner.</p></div><nav aria-label="Footer navigation"><strong>Explore</strong>${navigationLinks.slice(1).map(([path, label]) => `<a href="${path}" data-route>${label}</a>`).join('')}<a href="/resources#faq" data-route>FAQ</a></nav><div><strong>${demoMode ? 'Prototype' : 'Information'}</strong><button data-action="privacy">Privacy & POPIA</button><button data-action="terms">Terms</button>${demoMode ? '<button data-action="guide">Prototype guide</button>' : ''}<p class="social-placeholder">${icon('solar:global-linear')} Social profiles to be supplied by TGA.</p></div></div><div class="site-container footer-bottom"><span>© 2026 The Gun Association. ${demoMode ? 'Prototype copy for review.' : 'All rights reserved.'}</span>${demoMode ? '<b>Authentication, storage, payments and notifications are simulated.</b>' : ''}</div></footer>`;
+}
 
-      <section class="credibility" aria-label="Proposed service capabilities"><div class="site-container credibility-grid">${credibilityItems.map(([name, label]) => `<div>${icon(name)}<span>${label}</span></div>`).join('')}</div></section>
+function pageHero(eyebrow, title, text, asset = null, actions = '') {
+  return `<section class="page-hero"><div class="technical-grid" aria-hidden="true"></div><div class="site-container page-hero__grid ${asset ? '' : 'page-hero__grid--single'}"><div class="page-hero__copy" data-reveal><span class="eyebrow">${eyebrow}</span><h1 id="page-title" tabindex="-1">${title}</h1><p>${text}</p>${actions ? `<div class="page-hero__actions">${actions}</div>` : ''}</div>${asset ? `<div class="page-hero__media" data-reveal>${picture(asset, 'image-frame', true)}</div>` : ''}</div></section>`;
+}
 
-      <section class="section about-section" id="about"><div class="site-container editorial-grid">
-        <div>${sectionHeading('About The Gun Association', 'Supporting responsible, informed and connected members.', 'The Gun Association is presented as a member-focused organisation helping people navigate responsible firearm ownership, ongoing education and compliance with greater confidence. Where a matter needs case-specific advice, members are directed to appropriately qualified professionals.')}
-          <div class="pillar-list">${aboutPillars.map(([number, title, text]) => `<article data-reveal><span>${number}</span><div><h3>${title}</h3><p>${text}</p></div></article>`).join('')}</div>
-        </div>
-        <div class="editorial-media" data-reveal data-parallax>${picture(imageAssets.safety, 'image-frame')}<div class="media-note"><strong>Safety-led by design</strong><span>No sales, tactical instruction or legal guarantees.</span></div></div>
-      </div></section>
+function closingCta(title = 'Begin the journey or explore the working portal.') {
+  return `<section class="closing-cta"><div class="site-container"><span class="eyebrow">Ready for stakeholder review</span><h2>${title}</h2><div><button class="button button--brass" data-action="apply">Join TGA</button><button class="button button--glass" data-action="login">Access member portal</button><button class="text-button text-button--light" data-action="consulting">Contact firearm consulting</button></div></div></section>`;
+}
 
-      <section class="section section--panel" id="services"><div class="site-container">${sectionHeading('Association services', 'One connected member experience.', 'Six practical service areas bring membership administration, learning, records and support into a clearer journey.')}
-        <div class="service-grid">${services.map((service, index) => `<button class="service-card" type="button" data-flip-card aria-expanded="false" aria-label="More about ${service.title}" data-spotlight>
-          <span class="service-card__front"><b>0${index + 1}</b>${icon(service.icon)}<h3>${service.title}</h3><p>${service.text}</p><small>View detail ${icon('solar:arrow-right-up-linear')}</small></span>
-          <span class="service-card__back"><b>0${index + 1}</b><strong>${service.title}</strong><p>${service.detail}</p><small>Return to overview ${icon('solar:restart-linear')}</small></span>
-        </button>`).join('')}</div>
-      </div></section>
+function reviewCards(limit = reviews.length) {
+  return `<div class="review-stack">${reviews.slice(0, limit).map(([title, text]) => `<article><span>Review placeholder</span><h3>${title}</h3><p>${text}</p><dl><div><dt>Member</dt><dd>To be verified</dd></div><div><dt>Membership</dt><dd>To be verified</dd></div><div><dt>Province</dt><dd>To be verified</dd></div></dl></article>`).join('')}</div>`;
+}
 
-      <section class="section journey-section"><div class="site-container journey-layout">
-        <div>${sectionHeading('Membership journey', 'A clear route from application to everyday support.', 'Each step shows what is needed, what has been completed and what comes next.')}
-          <ol class="journey-list" data-journey-list>${journeySteps.map(([number, title, text]) => `<li data-reveal><span>${number}</span><div><h3>${title}</h3><p>${text}</p></div></li>`).join('')}</ol>
-        </div>
-        <div class="journey-visual" data-reveal><canvas data-rive-canvas data-rive-src="/rive/tga-journey.riv" aria-label="Optional animated membership journey"></canvas><div data-rive-fallback><span class="target-rings" aria-hidden="true"></span>${icon('solar:route-linear')}<strong>Member journey</strong><small>Approved Rive artwork can replace this static technical illustration.</small></div></div>
-      </div></section>
+function homePage() {
+  return `<main id="main-content">
+    <section class="hero" aria-labelledby="hero-title">${picture(imageAssets.hero, 'hero-media', true)}<div class="hero-shade"></div><canvas data-webgl-scene aria-hidden="true"></canvas><div class="technical-grid" aria-hidden="true"></div><div class="site-container hero-content"><div class="hero-copy" data-reveal><span class="eyebrow">South African member experience prototype</span><h1 id="hero-title" tabindex="-1">Responsible Ownership.<br><em>Professional Support.</em><br>One Trusted Association.</h1><p>Membership, training, assessments, compliance support and secure digital services for South Africa's firearm community.</p><div class="hero-weapon-rail" role="note">${icon('mdi:pistol')}<span>Precision <b>•</b> Discipline <b>•</b> Responsibility</span>${icon('mdi:bullet')}${icon('mdi:bullet')}${icon('mdi:bullet')}</div><div class="hero-actions"><button class="button button--brass" data-action="apply">Join TGA ${icon('solar:arrow-right-linear')}</button><button class="button button--glass" data-action="login">Access member portal</button></div><ul class="hero-trust" aria-label="Prototype trust indicators"><li>${icon('solar:shield-check-linear')} Responsible participation</li><li>${icon('solar:lock-keyhole-linear')} Privacy-led design</li><li>${icon('solar:map-point-linear')} South African context</li></ul></div></div></section>
+    <section class="credibility" aria-label="Proposed service capabilities"><div class="site-container credibility-grid">${credibilityItems.map(([name, label]) => `<div>${icon(name)}<span>${label}</span></div>`).join('')}</div></section>
+    <section class="section section--panel"><div class="site-container">${sectionHeading('Explore TGA', 'Focused support without the endless scroll.', 'Move directly to the membership, learning, document or professional-support information you need.')}<div class="service-preview-grid">${services.map((service, index) => `<a href="${serviceRoutes[index]}" data-route data-reveal><b>0${index + 1}</b>${icon(service.icon)}<h3>${service.title}</h3><p>${service.text}</p><span>Explore ${icon('solar:arrow-right-linear')}</span></a>`).join('')}</div></div></section>
+    <section class="section journey-section"><div class="site-container home-journey"><div>${sectionHeading('Membership journey', 'A clear route from application to everyday support.', 'Start with a concise view of the journey, then explore every stage on the membership page.')}<ol class="journey-list journey-list--preview">${journeySteps.slice(0, 3).map(([number, title, text]) => `<li data-reveal><span>${number}</span><div><h3>${title}</h3><p>${text}</p></div></li>`).join('')}</ol><a class="button button--outline" href="/membership#journey" data-route>View the full member journey</a></div><div class="journey-visual" data-reveal><div data-rive-fallback><span class="target-rings" aria-hidden="true"></span>${icon('solar:route-linear')}<strong>Member journey</strong><small>Applications, documents, assessment, payment, approval and ongoing support.</small></div></div></div></section>
+    <section class="section community-section"><div class="site-container community-grid"><div data-reveal>${picture(imageAssets.community, 'image-frame')}</div><div>${sectionHeading('Member feedback', 'A place for verified member experiences.', 'This preview demonstrates future social proof without presenting invented endorsements.')} ${reviewCards(1)}<p class="prototype-notice">Replace every placeholder with a consented, verified member review before publishing.</p><a class="text-button route-text-link" href="/about#reviews" data-route>View the complete review layout ${icon('solar:arrow-right-linear')}</a></div></div></section>
+    ${closingCta()}
+  </main>`;
+}
 
-      <section class="section split-feature" id="training"><div class="site-container split-feature__grid"><div data-reveal>${picture(imageAssets.assessment, 'image-frame')}</div><div>${sectionHeading('Training and education', 'Build confidence through approved learning pathways.', 'The prototype demonstrates how verified training information, assigned assessments and results can be presented without implying unconfirmed accreditation.')}
-        <ul class="check-list"><li>${icon('solar:check-circle-linear')} Safety and competency information</li><li>${icon('solar:check-circle-linear')} Training-provider placeholders</li><li>${icon('solar:check-circle-linear')} Assessment progress and result history</li><li>${icon('solar:check-circle-linear')} Human support when guidance is required</li></ul><button class="button button--outline" data-action="login">View member assessments</button></div></div></section>
+function aboutPage() {
+  return `<main id="main-content">${pageHero('About The Gun Association', 'Supporting responsible, informed and connected members.', 'The Gun Association is presented as a member-focused organisation helping people navigate responsible firearm ownership, ongoing education and compliance with greater confidence.', imageAssets.safety)}
+    <section class="section about-section"><div class="site-container editorial-grid"><div>${sectionHeading('Our proposed role', 'Practical support with responsible boundaries.', 'Where a matter needs case-specific advice, members are directed to appropriately qualified professionals. The prototype makes no sales, accreditation or legal-guarantee claims.')}</div><div class="pillar-list">${aboutPillars.map(([number, title, text]) => `<article data-reveal><span>${number}</span><div><h3>${title}</h3><p>${text}</p></div></article>`).join('')}</div></div></section>
+    <section class="section community-section" id="reviews"><div class="site-container community-grid"><div data-reveal>${picture(imageAssets.community, 'image-frame')}</div><div>${sectionHeading('Member community', 'A place for real member experiences.', 'Verified reviews can be added here once TGA has obtained consent and approved every claim.')} ${reviewCards()}<p class="prototype-notice">Replace every placeholder with a consented, verified member review before publishing.</p></div></div></section>
+    ${closingCta('Join a clearer, more connected member experience.')}
+  </main>`;
+}
 
-      <section class="section section--panel" id="assessments"><div class="site-container assessment-callout"><div>${sectionHeading('Online assessments', 'Structured, visible and ready for TGA-approved content.', 'Members can complete an assigned foundation assessment, view the stated pass mark and retain a local demonstration result.')}
-        <div class="progress-demo" aria-label="Illustrative assessment progress"><span><i style="width:72%"></i></span><div><strong>72% complete</strong><small>Illustrative progress only</small></div></div><button class="button button--brass" data-action="login">Open the demo portal</button></div><aside><span>ASSESSMENT 01</span><strong>Safety & Compliance Foundation</strong><p>5 demonstration questions · 80% pass mark</p>${icon('solar:clipboard-check-linear')}</aside></div></section>
+function membershipPage() {
+  return `<main id="main-content">${pageHero('TGA membership', 'A clearer membership journey from application to ongoing support.', 'The prototype brings requirements, progress, documents, assessments and member support into one connected experience.', imageAssets.community, '<button class="button button--brass" data-action="apply">Start an application</button><button class="button button--glass" data-action="login">Open the demo portal</button>')}
+    <section class="section"><div class="site-container">${sectionHeading('Member benefits', 'Less administration. More clarity.', 'The proposed member experience makes routine requirements easier to understand and complete.')}<div class="benefit-grid">${memberBenefits.map(([name, title, text]) => `<article data-reveal>${icon(name)}<h3>${title}</h3><p>${text}</p></article>`).join('')}</div></div></section>
+    <section class="section journey-section" id="journey"><div class="site-container journey-layout"><div>${sectionHeading('Membership journey', 'Six visible steps with no guesswork.', 'Each stage shows what is needed, what has been completed and what should happen next.')}<ol class="journey-list" data-journey-list>${journeySteps.map(([number, title, text]) => `<li data-reveal><span>${number}</span><div><h3>${title}</h3><p>${text}</p></div></li>`).join('')}</ol></div><div class="journey-visual" data-reveal><canvas data-rive-canvas data-rive-src="/rive/tga-journey.riv" aria-label="Optional animated membership journey"></canvas><div data-rive-fallback><span class="target-rings" aria-hidden="true"></span>${icon('solar:route-linear')}<strong>Member journey</strong><small>Approved Rive artwork can replace this static technical illustration.</small></div></div></div></section>
+    <section class="section section--panel" id="plans"><div class="site-container">${sectionHeading('Illustrative membership', 'Simple options for stakeholder review.', 'TGA must verify categories, eligibility, inclusions and all fees before publication.')}<div class="pricing-grid">${membershipPlans.map((plan) => `<article class="price-card ${plan.featured ? 'is-featured' : ''}" data-reveal>${plan.featured ? '<span class="prototype-badge">Featured prototype</span>' : ''}<p>${plan.name}</p><h3>${plan.price}</h3><small>${plan.period}</small><ul>${plan.items.map((item) => `<li>${icon('solar:check-circle-linear')}${item}</li>`).join('')}</ul><button class="button ${plan.featured ? 'button--brass' : 'button--outline'}" data-action="apply">Start an application</button></article>`).join('')}</div><p class="prototype-notice">Payments and prices are illustrative. No card or banking information is requested by this prototype.</p></div></section>
+    ${closingCta('Choose a membership path or explore the working portal.')}
+  </main>`;
+}
 
-      <section class="section" id="compliance"><div class="site-container editorial-grid editorial-grid--reverse"><div class="editorial-media" data-reveal>${picture(imageAssets.consultation, 'image-frame')}<div class="media-note"><strong>Prototype privacy boundary</strong><span>No application or file contents are transmitted.</span></div></div><div>${sectionHeading('Compliance support', 'Documents handled with clarity and appropriate caution.', 'The member experience demonstrates document checklists, upload validation, visible review states and professional escalation. Production controls require security and legal approval.')}
-        <div class="compliance-points"><article>${icon('solar:folder-security-linear')}<h3>Private by intent</h3><p>Encrypted storage, access control and malware scanning remain backend requirements.</p></article><article>${icon('solar:history-linear')}<h3>Visible review trail</h3><p>Members can understand document status, expiry and requested changes.</p></article></div><button class="text-button" data-action="privacy">Read the prototype privacy notice ${icon('solar:arrow-right-linear')}</button></div></div></section>
+function trainingPage() {
+  return `<main id="main-content">${pageHero('Training and education', 'Build confidence through approved learning pathways.', 'The prototype demonstrates how verified training information, assigned assessments and results can be presented without implying unconfirmed accreditation.', imageAssets.assessment, '<button class="button button--brass" data-action="login">View member assessments</button>')}
+    <section class="section"><div class="site-container split-feature__grid"><div>${sectionHeading('Learning pathways', 'Clear information before and after training.', 'Provider details, course availability and accreditation claims remain placeholders until TGA supplies verified information.')}<ul class="check-list"><li>${icon('solar:check-circle-linear')} Safety and competency information</li><li>${icon('solar:check-circle-linear')} Training-provider placeholders</li><li>${icon('solar:check-circle-linear')} Assessment progress and result history</li><li>${icon('solar:check-circle-linear')} Human support when guidance is required</li></ul></div><aside class="training-boundary" data-reveal>${icon('solar:shield-check-linear')}<h2>Responsible by design</h2><p>The site provides general learning and portal guidance. It does not provide tactical instruction, certification guarantees or case-specific legal advice.</p></aside></div></section>
+    <section class="section section--panel" id="assessments"><div class="site-container assessment-callout"><div>${sectionHeading('Online assessments', 'Structured, visible and ready for TGA-approved content.', 'Members can complete an assigned foundation assessment, view the stated pass mark and retain a local demonstration result.')}<div class="progress-demo" aria-label="Illustrative assessment progress"><span><i style="width:72%"></i></span><div><strong>72% complete</strong><small>Illustrative progress only</small></div></div><button class="button button--brass" data-action="login">Open the demo portal</button></div><aside><span>ASSESSMENT 01</span><strong>Safety & Compliance Foundation</strong><p>5 demonstration questions · 80% pass mark</p>${icon('solar:clipboard-check-linear')}</aside></div></section>
+    ${closingCta('Continue learning or open the member assessment experience.')}
+  </main>`;
+}
 
-      <section class="section section--panel" id="membership"><div class="site-container">${sectionHeading('Illustrative membership', 'Simple options for stakeholder review.', 'TGA must verify categories, eligibility, inclusions and all fees before publication.')}
-        <div class="pricing-grid">${membershipPlans.map((plan) => `<article class="price-card ${plan.featured ? 'is-featured' : ''}" data-reveal>${plan.featured ? '<span class="prototype-badge">Featured prototype</span>' : ''}<p>${plan.name}</p><h3>${plan.price}</h3><small>${plan.period}</small><ul>${plan.items.map((item) => `<li>${icon('solar:check-circle-linear')}${item}</li>`).join('')}</ul><button class="button ${plan.featured ? 'button--brass' : 'button--outline'}" data-action="apply">Start an application</button></article>`).join('')}</div>
-        <p class="prototype-notice">Payments and prices are illustrative. No card or banking information is requested by this prototype.</p>
-      </div></section>
+function resourcesPage() {
+  return `<main id="main-content">${pageHero('Resources and compliance', 'Responsible information, document clarity and appropriate support.', 'Explore the prototype’s general guidance for assessments, compliance documents, secure storage and lawful participation.', imageAssets.storage)}
+    <section class="section" id="compliance"><div class="site-container editorial-grid editorial-grid--reverse"><div class="editorial-media" data-reveal>${picture(imageAssets.consultation, 'image-frame')}<div class="media-note"><strong>Prototype privacy boundary</strong><span>No application or file contents are transmitted.</span></div></div><div>${sectionHeading('Compliance support', 'Documents handled with clarity and appropriate caution.', 'The member experience demonstrates document checklists, upload validation, visible review states and professional escalation. Production controls require security and legal approval.')}<div class="compliance-points"><article>${icon('solar:folder-security-linear')}<h3>Private by intent</h3><p>Encrypted storage, access control and malware scanning remain backend requirements.</p></article><article>${icon('solar:history-linear')}<h3>Visible review trail</h3><p>Members can understand document status, expiry and requested changes.</p></article></div><button class="text-button" data-action="privacy">Read the prototype privacy notice ${icon('solar:arrow-right-linear')}</button></div></div></section>
+    <section class="section section--panel" id="assessments"><div class="site-container assessment-callout"><div>${sectionHeading('Assessment resources', 'Understand the demonstration assessment journey.', 'Approved questions, pass marks, validity periods and retake policies must be supplied by TGA before publication.')}<p class="resource-copy">The member portal demonstrates assigned assessments, visible progress, local results and administrator review.</p><a class="button button--outline" href="/training#assessments" data-route>Explore training and assessments</a></div><aside><span>GENERAL GUIDANCE</span><strong>Approved content required</strong><p>No accreditation or competency outcome is claimed.</p>${icon('solar:notebook-linear')}</aside></div></section>
+    <section class="section ownership-section" id="ownership"><div class="site-container">${sectionHeading('Responsible ownership', 'Safety, secure storage and lawful participation come first.', 'The public experience promotes calm, responsible participation and directs authoritative questions to qualified professionals or relevant authorities.')}<div class="ownership-grid">${responsiblePrinciples.map(([name, title, text]) => `<article data-reveal>${icon(name)}<h3>${title}</h3><p>${text}</p></article>`).join('')}</div></div></section>
+    <section class="section section--panel" id="faq"><div class="site-container faq-container">${sectionHeading('Frequently asked questions', 'Useful information before you begin.', 'General prototype guidance only. TGA must approve final requirements and wording.')}<div class="faq-list">${faqs.map(([question, answer]) => `<details><summary>${question}${icon('solar:add-circle-linear')}</summary><p>${answer}</p></details>`).join('')}</div></div></section>
+    ${closingCta('Find the right information or ask for appropriate professional support.')}
+  </main>`;
+}
 
-      <section class="section ownership-section" id="resources"><div class="site-container"><div class="ownership-hero"><div>${sectionHeading('Responsible ownership', 'Safety, secure storage and lawful participation come first.', 'The public experience promotes calm, responsible participation and directs authoritative questions to qualified professionals or relevant authorities.')}</div>${picture(imageAssets.storage, 'image-frame')}</div>
-        <div class="ownership-grid">${responsiblePrinciples.map(([name, title, text]) => `<article data-reveal>${icon(name)}<h3>${title}</h3><p>${text}</p></article>`).join('')}</div>
-      </div></section>
+function contactPage() {
+  return `<main id="main-content">${pageHero('Contact TGA', 'Clear routes to the right support.', 'Verified contact information has not yet been supplied. These placeholders show how future enquiries will be directed without inventing details.', null, '<button class="button button--brass" data-action="apply">Start an application</button><button class="button button--glass" data-action="login">Member login</button>')}
+    <section class="section"><div class="site-container">${sectionHeading('Contact pathways', 'Choose the support route that fits your question.', 'Email addresses, telephone numbers and booking links remain pending TGA verification.')}<div class="contact-grid">${contactPlaceholders.map(([title, text], index) => `<article data-reveal><span>0${index + 1}</span><h3>${title}</h3><p>${text}</p><small>Contact details pending TGA approval</small></article>`).join('')}</div></div></section>
+    <section class="section section--panel" id="professional-assistance"><div class="site-container contact-boundary">${sectionHeading('Professional assistance', 'General support stops where case-specific advice begins.', 'Members should be directed to appropriately qualified professionals or relevant authorities when an enquiry requires legal, licensing or other case-specific advice.')}<button class="button button--outline" data-action="consulting">View consulting placeholder</button></div></section>
+    ${closingCta('Start an application, open the portal or find the right support route.')}
+  </main>`;
+}
 
-      <section class="section community-section"><div class="site-container community-grid"><div data-reveal>${picture(imageAssets.community, 'image-frame')}</div><div>${sectionHeading('Member community', 'A place for verified member experiences.', 'This layout demonstrates future social proof without presenting invented endorsements.')}
-        <div class="review-stack">${reviews.map(([title, text]) => `<article><span>Review placeholder</span><h3>${title}</h3><p>${text}</p><dl><div><dt>Member</dt><dd>To be verified</dd></div><div><dt>Membership</dt><dd>To be verified</dd></div><div><dt>Province</dt><dd>To be verified</dd></div></dl></article>`).join('')}</div>
-        <p class="prototype-notice">Replace every placeholder with a consented, verified member review before publishing.</p></div></div></section>
+function notFoundPage() {
+  return `<main id="main-content">${pageHero('Page not found', 'That page is not part of this prototype.', 'Use the main navigation or return to the homepage to continue exploring The Gun Association member experience.', null, '<a class="button button--brass" href="/" data-route>Return home</a>')}</main>`;
+}
 
-      <section class="section section--panel" id="faq"><div class="site-container faq-container">${sectionHeading('Frequently asked questions', 'Useful information before you begin.', 'General prototype guidance only. TGA must approve final requirements and wording.')}
-        <div class="faq-list">${faqs.map(([question, answer]) => `<details><summary>${question}${icon('solar:add-circle-linear')}</summary><p>${answer}</p></details>`).join('')}</div>
-      </div></section>
+const pageRenderers = Object.freeze({ '/': homePage, '/about': aboutPage, '/membership': membershipPage, '/training': trainingPage, '/resources': resourcesPage, '/contact': contactPage });
 
-      <section class="section" id="contact"><div class="site-container">${sectionHeading('Contact TGA', 'Clear routes to the right support.', 'Verified contact information has not yet been supplied.')}
-        <div class="contact-grid">${contactPlaceholders.map(([title, text], index) => `<article data-reveal><span>0${index + 1}</span><h3>${title}</h3><p>${text}</p><small>Contact details pending TGA approval</small></article>`).join('')}</div>
-      </div></section>
-
-      <section class="closing-cta"><div class="site-container"><span class="eyebrow">Ready for stakeholder review</span><h2>Begin the journey or explore the working portal.</h2><div><button class="button button--brass" data-action="apply">Join TGA</button><button class="button button--glass" data-action="login">Access member portal</button><button class="text-button text-button--light" data-action="consulting">Contact firearm consulting</button></div></div></section>
-    </main>
-
-    <footer class="public-footer"><div class="site-container footer-weapon-line" aria-hidden="true">${icon('mdi:pistol')}<span></span>${icon('mdi:bullet')}${icon('mdi:bullet')}${icon('mdi:bullet')}</div><div class="site-container footer-grid"><div>${logo()}<p>A responsible, member-first digital experience${demoMode ? ' prototype for stakeholder review' : ''}.</p><p class="footer-responsibility">Safe handling, secure storage, ongoing training and lawful compliance remain the responsibility of every firearm owner.</p></div><nav aria-label="Footer navigation"><strong>Explore</strong><a href="#about">About TGA</a><a href="#membership">Membership</a><a href="#training">Training</a><a href="#resources">Resources</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></nav><div><strong>${demoMode ? 'Prototype' : 'Information'}</strong><button data-action="privacy">Privacy & POPIA</button><button data-action="terms">Terms</button>${demoMode ? '<button data-action="guide">Prototype guide</button>' : ''}<p class="social-placeholder">${icon('solar:global-linear')} Social profiles to be supplied by TGA.</p></div></div><div class="site-container footer-bottom"><span>© 2026 The Gun Association. ${demoMode ? 'Prototype copy for review.' : 'All rights reserved.'}</span>${demoMode ? '<b>Authentication, storage, payments and notifications are simulated.</b>' : ''}</div></footer>
-    <button class="chat-launcher" type="button" data-action="chat" aria-label="Open TGA prototype assistant">${icon('solar:chat-round-dots-bold')}<span>Ask TGA</span></button>
-  </div>`;
+export function publicTemplate(path = '/', demoMode = true) {
+  const page = pageRenderers[path]?.() || notFoundPage();
+  return `<div class="public-site" id="top">${publicHeader(path, demoMode)}${page}${publicFooter(demoMode)}<button class="chat-launcher" type="button" data-action="chat" aria-label="Open TGA prototype assistant">${icon('solar:chat-round-dots-bold')}<span>Ask TGA</span></button></div>`;
 }
 
 export function loginTemplate(rememberedEmail = '', demoMode = true) {
