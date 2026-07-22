@@ -3,36 +3,72 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#050505">
-    <meta name="description" content="The Gun Association member website and interactive portal prototype.">
-    <meta name="robots" content="noindex, nofollow">
-    <title>The Gun Association | Member experience</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Italiana&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#d3131d">
+    <meta name="description" content="Join The Gun Association for secure member services, firearm training information, online assessments, document management, compliance support and professional consulting pathways.">
+    <meta name="robots" content="__TGA_ROBOTS__">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_ZA">
+    <meta property="og:site_name" content="The Gun Association">
+    <meta property="og:title" content="The Gun Association | Membership, Training and Compliance Support">
+    <meta property="og:description" content="Responsible ownership, professional support and secure digital member services for South Africa's firearm community.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The Gun Association | Membership, Training and Compliance Support">
+    <meta name="twitter:description" content="Responsible ownership, professional support and secure digital member services for South Africa's firearm community.">
+    <!-- TGA_CANONICAL -->
+    <!-- TGA_SOCIAL_IMAGE -->
+    <title>The Gun Association | Membership, Training and Compliance Support</title>
+    <link rel="icon" href="/tga-mark.svg" type="image/svg+xml">
+    <link rel="preload" as="image" type="image/webp" href="/images/tga/hero-range-training-1536.webp" imagesrcset="/images/tga/hero-range-training-640.webp 640w, /images/tga/hero-range-training-960.webp 960w, /images/tga/hero-range-training-1536.webp 1536w" imagesizes="100vw">
     <link rel="stylesheet" href="/src/styles.css">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "The Gun Association",
+            "description": "A member-focused association prototype supporting responsible ownership, education, compliance administration and professional escalation.",
+            "logo": "/tga-mark.svg"
+          },
+          {
+            "@type": "WebSite",
+            "name": "The Gun Association Member Experience",
+            "description": "Membership, training information, assessments, document management and compliance-support pathways."
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              { "@type": "Question", "name": "Who can apply for membership?", "acceptedAnswer": { "@type": "Answer", "text": "Membership categories and eligibility requirements must be confirmed by TGA. Options and fees in this prototype are illustrative." } },
+              { "@type": "Question", "name": "Which documents will I need?", "acceptedAnswer": { "@type": "Answer", "text": "Requirements depend on the selected membership path. The portal demonstrates an identity, address and compliance-document checklist." } },
+              { "@type": "Question", "name": "How do online assessments work?", "acceptedAnswer": { "@type": "Answer", "text": "Members complete assigned demonstration questions, see a pass mark and receive a simulated result. Production content requires TGA approval." } },
+              { "@type": "Question", "name": "How will personal information be handled?", "acceptedAnswer": { "@type": "Answer", "text": "Application data is not transmitted by this prototype. Production requires private storage, access control, retention rules and legally approved POPIA-aligned controls." } }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Skip to content</a>
-    <div id="app" aria-live="polite">
-      <div class="boot-screen"><img src="/tga-mark.svg" alt=""><span>Preparing the TGA experience</span></div>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <div id="app">
+      <div class="boot-screen"><img src="/tga-mark.svg" width="84" height="84" alt=""><span>Preparing the TGA member experience</span></div>
     </div>
 
     <dialog class="site-dialog" id="site-dialog" aria-labelledby="site-dialog-title">
       <div class="dialog-card">
-        <header><h2 id="site-dialog-title">Dialog</h2><button class="icon-button" type="button" data-close-dialog aria-label="Close dialog"><iconify-icon icon="solar:close-circle-linear"></iconify-icon></button></header>
+        <header><h2 id="site-dialog-title">Dialog</h2><button class="icon-button" type="button" data-close-dialog aria-label="Close dialog"><iconify-icon icon="solar:close-circle-linear" aria-hidden="true"></iconify-icon></button></header>
         <div id="site-dialog-content"></div>
       </div>
     </dialog>
 
     <dialog class="site-dialog site-dialog--notice" id="notice-dialog" aria-labelledby="notice-dialog-title">
       <div class="dialog-card">
-        <header><h2 id="notice-dialog-title">Notice</h2><button class="icon-button" type="button" data-close-notice aria-label="Close notice"><iconify-icon icon="solar:close-circle-linear"></iconify-icon></button></header>
+        <header><h2 id="notice-dialog-title">Notice</h2><button class="icon-button" type="button" data-close-notice aria-label="Close notice"><iconify-icon icon="solar:close-circle-linear" aria-hidden="true"></iconify-icon></button></header>
         <div id="notice-dialog-content"></div>
       </div>
     </dialog>
 
-    <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+    <div class="toast-region" id="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -1,0 +1,12 @@
+{
+  "name": "tga-member-portal-source",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm --prefix ./TGA_Member_Portal_Source/tga-portal-prototype ci && npm --prefix ./TGA_Member_Portal_Source/tga-portal-prototype run build",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.112.0"
+  }
+}
