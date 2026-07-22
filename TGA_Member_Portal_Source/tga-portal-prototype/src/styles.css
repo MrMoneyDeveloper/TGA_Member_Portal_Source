@@ -177,9 +177,9 @@ iconify-icon { font-size: 1.35em; }
 .pillar-list h3 { margin: 0 0 6px; font-family: var(--heading); font-size: 1.5rem; text-transform: uppercase; }
 .pillar-list p { margin: 0; color: #666b6d; }
 .editorial-media { position: relative; }
-.image-frame { position: relative; display: block; overflow: hidden; background: var(--tga-panel-light); box-shadow: var(--shadow); }
+.image-frame { position: relative; display: block; width: 100%; aspect-ratio: 3 / 2; overflow: hidden; background: var(--tga-panel-light); box-shadow: var(--shadow); }
 .image-frame::after { position: absolute; inset: 0; content: ''; pointer-events: none; border: 1px solid rgba(240,238,232,.16); box-shadow: inset 0 0 0 10px rgba(8,10,11,.08); }
-.image-frame img { width: 100%; height: auto; min-height: 0; aspect-ratio: 3 / 2; object-fit: contain; }
+.image-frame img { display: block; width: 100%; height: 100%; min-height: 0; max-height: none; object-fit: contain; }
 .media-note { position: absolute; right: -24px; bottom: -24px; max-width: 280px; padding: 20px; display: grid; gap: 4px; color: var(--tga-off-white); background: var(--tga-panel); border-left: 3px solid var(--tga-brass); box-shadow: var(--shadow); }
 .media-note strong { font-family: var(--heading); font-size: 1.3rem; text-transform: uppercase; }
 .media-note span { color: var(--tga-muted); font-size: .78rem; }
