@@ -44,7 +44,21 @@ Final public images are center-cropped to 3:2 and supplied as 640, 960 and 1536 
 
 - Placement: Member community and review-placeholder section.
 - Prompt: responsible adult community event at a South African clay-target range; diverse adults in ordinary outdoor clothing and eye/ear protection converse between activities; sporting firearms safely broken open or pointed away; rural late-afternoon landscape.
-- Status: prototype — not a real TGA event or member endorsement.
+- Status: superseded by `member-community-event-sa-v3.png`.
+
+### `member-community-event-sa-v2.png`
+
+- Placement: proposed replacement for the member community and review-placeholder photograph.
+- Prompt: candid group of five diverse adult South African association members talking after a supervised clay-target session beneath a modest timber-and-corrugated range shelter; open Highveld/Karoo veld, low sandstone hills, indigenous scrub and warm late-afternoon light; realistic eye and ear protection; one unloaded break-action clay shotgun visibly open and held safely downrange; complete group, faces, hands and equipment kept inside a 3:2 frame.
+- Constraints: no flags, text, logos, watermarks, official uniforms, tactical posturing, children, firing, aiming, muzzle flashes, crosshairs, unsafe handling or visible personal information.
+- Status: earlier candidate — not selected.
+
+### `member-community-event-sa-v3.png`
+
+- Placement: source master for the current member community and review-placeholder photograph.
+- Prompt: five contemporary adult South African members, predominantly Black South African men and women with natural Nguni and Sotho-Tswana representation plus a Coloured South African member, talking as peers after a supervised clay-target session at a Highveld range; ordinary local outdoor clothing, appropriate eye and ear protection, realistic skin and hair, no costumes or stereotypes.
+- Safety and framing: one unloaded break-action clay shotgun visibly open and held downrange; remaining equipment secured; every face, hand and relevant object retained inside the complete 3:2 frame.
+- Status: user-selected and converted to 640, 960 and 1536 pixel AVIF, WebP and JPEG variants; still requires final TGA safety and representation approval.
 
 ### `og.png`
 

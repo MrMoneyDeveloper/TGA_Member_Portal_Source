@@ -9,7 +9,7 @@ export const imageAssets = Object.freeze({
   storage: { name: 'secure-firearm-storage', alt: 'Responsible owner securing a firearm in a locked steel safe', position: 'center' },
   assessment: { name: 'competency-assessment-training', alt: 'Adult members completing a supervised firearm-safety competency assessment', position: 'center' },
   consultation: { name: 'compliance-document-consultation', alt: 'Member and consultant reviewing a compliance checklist in a private office', position: 'center' },
-  community: { name: 'member-community-event', alt: 'Adult members meeting responsibly at a South African clay-target shooting range', position: 'center' }
+  community: { name: 'member-community-event', alt: 'Five South African adult members talking together at a responsible clay-target shooting range', position: 'center' }
 });
 
 export const credibilityItems = [
