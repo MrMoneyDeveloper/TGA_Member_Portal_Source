@@ -25,10 +25,12 @@ const weaponMark = (className = 'weapon-mark') => `<span class="${className}" ar
 
 export function picture(asset, className = '', eager = false) {
   const responsiveSizes = className.includes('hero-media') ? '100vw' : '(max-width: 800px) 100vw, 50vw';
+  const width = asset.width || 1536;
+  const height = asset.height || 1024;
   return `<picture class="${className}">
     <source type="image/avif" srcset="/images/tga/${asset.name}-640.avif 640w, /images/tga/${asset.name}-960.avif 960w, /images/tga/${asset.name}-1536.avif 1536w" sizes="${responsiveSizes}">
     <source type="image/webp" srcset="/images/tga/${asset.name}-640.webp 640w, /images/tga/${asset.name}-960.webp 960w, /images/tga/${asset.name}-1536.webp 1536w" sizes="${responsiveSizes}">
-    <img src="/images/tga/${asset.name}-1536.jpg" srcset="/images/tga/${asset.name}-640.jpg 640w, /images/tga/${asset.name}-960.jpg 960w, /images/tga/${asset.name}-1536.jpg 1536w" sizes="${responsiveSizes}" width="1536" height="1024" alt="${escapeHtml(asset.alt)}" style="object-position:${asset.position}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+    <img src="/images/tga/${asset.name}-1536.jpg" srcset="/images/tga/${asset.name}-640.jpg 640w, /images/tga/${asset.name}-960.jpg 960w, /images/tga/${asset.name}-1536.jpg 1536w" sizes="${responsiveSizes}" width="${width}" height="${height}" alt="${escapeHtml(asset.alt)}" style="object-position:${asset.position}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
   </picture>`;
 }
 

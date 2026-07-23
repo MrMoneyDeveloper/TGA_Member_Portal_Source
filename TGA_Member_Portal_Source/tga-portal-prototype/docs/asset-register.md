@@ -58,7 +58,14 @@ Final public images are center-cropped to 3:2 and supplied as 640, 960 and 1536 
 - Placement: source master for the current member community and review-placeholder photograph.
 - Prompt: five contemporary adult South African members, predominantly Black South African men and women with natural Nguni and Sotho-Tswana representation plus a Coloured South African member, talking as peers after a supervised clay-target session at a Highveld range; ordinary local outdoor clothing, appropriate eye and ear protection, realistic skin and hair, no costumes or stereotypes.
 - Safety and framing: one unloaded break-action clay shotgun visibly open and held downrange; remaining equipment secured; every face, hand and relevant object retained inside the complete 3:2 frame.
-- Status: user-selected and converted to 640, 960 and 1536 pixel AVIF, WebP and JPEG variants; still requires final TGA safety and representation approval.
+- Status: superseded by the user-supplied full-group composition on 23 July 2026.
+
+### User-supplied full-group member community image
+
+- Placement: current homepage member-feedback photograph and About-page member-community photograph.
+- Source: user-supplied 1920×1268 PNG showing five South African adults at a controlled outdoor range.
+- Display treatment: the complete composition is preserved without cover cropping; the homepage uses a full-bleed half-page image panel and the mobile layout retains the photograph's natural proportions.
+- Status: converted without cropping to 640, 960 and 1536 pixel AVIF, WebP and JPEG variants; still requires final TGA safety, representation and licensing approval.
 
 ### `og.png`
 
