@@ -1,6 +1,8 @@
 import {
   aboutPillars,
   chatTopics,
+  cinematicCallouts,
+  cinematicPanels,
   contactPlaceholders,
   credibilityItems,
   faqs,
@@ -134,9 +136,43 @@ function reviewCards(limit = reviews.length) {
   return `<div class="review-stack">${reviews.slice(0, limit).map(([title, text]) => `<article><span>Review placeholder</span><h3>${title}</h3><p>${text}</p><dl><div><dt>Member</dt><dd>To be verified</dd></div><div><dt>Membership</dt><dd>To be verified</dd></div><div><dt>Province</dt><dd>To be verified</dd></div></dl></article>`).join('')}</div>`;
 }
 
+function cinematicHomepageHero() {
+  return `<section class="cinematic" data-cinematic-section aria-labelledby="cinematic-title">
+    <div class="cinematic__stage">
+      <div class="cinematic__ambient" aria-hidden="true"></div>
+      <div class="cinematic__grid" aria-hidden="true"></div>
+      <div class="cinematic__loader" data-cinematic-loader aria-hidden="true"><img src="/tga-mark.svg" width="72" height="72" alt=""><span></span><small>Preparing member experience</small></div>
+      <div class="cinematic__brand" aria-hidden="true"><img src="/tga-mark.svg" width="46" height="46" alt=""><span>The Gun Association</span></div>
+      <div class="cinematic__product" data-cinematic-product aria-hidden="true">
+        <canvas data-cinematic-canvas></canvas>
+        <div class="fictional-product">
+          <span class="fictional-product__slide"></span>
+          <span class="fictional-product__frame"></span>
+          <span class="fictional-product__grip"></span>
+        </div>
+        <span class="cinematic__highlight" data-cinematic-highlight></span>
+      </div>
+      <div class="cinematic__interface" data-cinematic-interface aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="site-container cinematic__hero-copy" data-cinematic-hero>
+        <span class="eyebrow">The Gun Association</span>
+        <h1 id="cinematic-title" tabindex="-1">A Smarter Member Experience</h1>
+        <p>Membership, training, resources and responsible firearm ownership in one secure platform.</p>
+        <div class="cinematic__actions"><button class="button button--cinematic" data-action="apply">Become a Member ${icon('solar:arrow-right-linear')}</button><a class="button button--cinematic-outline" href="/membership" data-route>Explore Membership</a></div>
+      </div>
+      <div class="cinematic__panels" aria-label="Member platform highlights">
+        ${cinematicPanels.map(([title, text], index) => `<article class="cinematic-panel" data-cinematic-panel="${index}"><span>0${index + 1}</span><h2>${title}</h2><p>${text}</p></article>`).join('')}
+      </div>
+      <div class="cinematic__callouts" data-cinematic-callouts aria-label="Member services">
+        ${cinematicCallouts.map((label, index) => `<span class="cinematic-callout cinematic-callout--${index + 1}"><i aria-hidden="true"></i>${label}</span>`).join('')}
+      </div>
+      <div class="cinematic__scroll-cue" data-cinematic-scroll-cue aria-hidden="true"><span></span>Scroll to explore</div>
+    </div>
+  </section>`;
+}
+
 function homePage() {
   return `<main id="main-content">
-    <section class="hero" aria-labelledby="hero-title">${picture(imageAssets.hero, 'hero-media', true)}<div class="hero-shade"></div><canvas data-webgl-scene aria-hidden="true"></canvas><div class="technical-grid" aria-hidden="true"></div><div class="site-container hero-content"><div class="hero-copy" data-reveal><span class="eyebrow">South African member experience prototype</span><h1 id="hero-title" tabindex="-1">Responsible Ownership.<br><em>Professional Support.</em><br>One Trusted Association.</h1><p>Membership, training, assessments, compliance support and secure digital services for South Africa's firearm community.</p><div class="hero-weapon-rail" role="note">${icon('mdi:pistol')}<span>Precision <b>•</b> Discipline <b>•</b> Responsibility</span>${icon('mdi:bullet')}${icon('mdi:bullet')}${icon('mdi:bullet')}</div><div class="hero-actions"><button class="button button--brass" data-action="apply">Join TGA ${icon('solar:arrow-right-linear')}</button><button class="button button--glass" data-action="login">Access member portal</button></div><ul class="hero-trust" aria-label="Prototype trust indicators"><li>${icon('solar:shield-check-linear')} Responsible participation</li><li>${icon('solar:lock-keyhole-linear')} Privacy-led design</li><li>${icon('solar:map-point-linear')} South African context</li></ul></div></div></section>
+    ${cinematicHomepageHero()}
     <section class="credibility" aria-label="Proposed service capabilities"><div class="site-container credibility-grid">${credibilityItems.map(([name, label]) => `<div>${icon(name)}<span>${label}</span></div>`).join('')}</div></section>
     <section class="section section--panel"><div class="site-container">${sectionHeading('Explore TGA', 'Focused support without the endless scroll.', 'Move directly to the membership, learning, document or professional-support information you need.')}<div class="service-preview-grid">${services.map((service, index) => `<a href="${serviceRoutes[index]}" data-route data-reveal><b>0${index + 1}</b>${icon(service.icon)}<h3>${service.title}</h3><p>${service.text}</p><span>Explore ${icon('solar:arrow-right-linear')}</span></a>`).join('')}</div></div></section>
     <section class="section journey-section"><div class="site-container home-journey"><div>${sectionHeading('Membership journey', 'A clear route from application to everyday support.', 'Start with a concise view of the journey, then explore every stage on the membership page.')}<ol class="journey-list journey-list--preview">${journeySteps.slice(0, 3).map(([number, title, text]) => `<li data-reveal><span>${number}</span><div><h3>${title}</h3><p>${text}</p></div></li>`).join('')}</ol><a class="button button--outline" href="/membership#journey" data-route>View the full member journey</a></div><div class="journey-visual" data-reveal><div data-rive-fallback><span class="target-rings" aria-hidden="true"></span>${icon('solar:route-linear')}<strong>Member journey</strong><small>Applications, documents, assessment, payment, approval and ongoing support.</small></div></div></div></section>

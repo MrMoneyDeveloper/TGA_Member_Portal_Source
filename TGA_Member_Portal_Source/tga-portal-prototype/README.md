@@ -12,7 +12,7 @@ The experience promotes responsible ownership, safety, secure storage, training 
 - Self-hosted DM Sans and Barlow Condensed through Fontsource
 - GSAP 3.15.0 with ScrollTrigger and Flip
 - Lenis 1.3.25 smooth scrolling with reduced-motion and mobile safeguards
-- Three.js 0.185.1 for restrained hero particles, rings and precision lines
+- Three.js 0.185.1 for the lazy-loaded cinematic homepage product scene
 - Optional Rive WebGL 2.38.5, loaded only after an approved `.riv` file is detected
 - Iconify Icon 3.0.2 with Solar interface icons
 - esbuild 0.28.1 and Wrangler 4.112.0
@@ -41,12 +41,22 @@ src/main.js                Application state, events and prototype workflows
 src/templates.js           Public, login, member and administrator templates
 src/data.js                Central content, demo records and image manifest
 src/config.js              Build-time public configuration
-src/effects.js             GSAP, Lenis, Three.js and optional Rive effects
+src/effects.js             Shared GSAP, Lenis and optional Rive effects
+src/cinematic.js           Cinematic scene, original product geometry and scroll timeline
 src/styles.css              Design tokens and responsive interface styling
 public/images/tga/         Responsive prototype photography
 docs/asset-register.md     Image-generation and approval register
+docs/cinematic-scene.md    Scene safety, optimisation and optional GLB guidance
 scripts/build.mjs          Cloudflare-compatible production build
 ```
+
+## Cinematic homepage scene
+
+The homepage opens with a dark, scroll-driven member-platform presentation. Desktop and tablet use an original procedural Three.js object with matte-black materials, restrained lighting and GSAP ScrollTrigger motion. The object is fictional and unbranded: it does not reproduce a manufacturer model, texture, marking or labelled component.
+
+Three.js is imported only when the scene is present and the visitor is on a suitable non-mobile device without reduced motion enabled. Mobile uses a lighter CSS silhouette. Reduced-motion mode removes the long scroll sequence and presents the hero, all four platform panels, service callouts and a static silhouette as ordinary page content.
+
+No GLB is required. See [docs/cinematic-scene.md](docs/cinematic-scene.md) for the optional future asset path, licensing checklist and replacement procedure.
 
 ## Local development
 
@@ -58,6 +68,8 @@ npm run dev
 ```
 
 The Wrangler preview is available at `http://127.0.0.1:5173`.
+
+Use `http://127.0.0.1:5173/?motion=reduce` to exercise the same static cinematic fallback used when a visitor enables reduced motion.
 
 ## Production build
 
