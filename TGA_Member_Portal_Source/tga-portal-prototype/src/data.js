@@ -21,22 +21,6 @@ export const credibilityItems = [
   ['solar:chat-round-call-linear', 'Professional escalation']
 ];
 
-export const cinematicPanels = [
-  ['Built around members', 'Access membership information, renewals, resources and support from one central platform.'],
-  ['Training and development', 'Discover training opportunities and resources designed to support responsible ownership.'],
-  ['Secure digital access', 'Manage your profile, documents and association activity through a protected member experience.'],
-  ['A connected community', 'Stay informed through association announcements, events and member updates.']
-];
-
-export const cinematicCallouts = [
-  'Digital Membership',
-  'Training Resources',
-  'Document Management',
-  'Event Access',
-  'Member Support',
-  'Secure Profile'
-];
-
 export const aboutPillars = [
   ['01', 'Responsible participation', 'Encouraging safe, lawful and informed participation across the firearm community.'],
   ['02', 'Practical member support', 'Making membership, records, renewals and everyday administration easier to understand.'],

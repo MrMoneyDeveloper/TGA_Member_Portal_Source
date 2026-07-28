@@ -2,17 +2,17 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Flip } from 'gsap/Flip';
 import Lenis from 'lenis';
+import * as THREE from 'three';
 
 gsap.registerPlugin(ScrollTrigger, Flip);
 
 let cleanupCurrent = () => {};
 
-async function initialiseWebGL(canvas, reducedMotion) {
+function initialiseWebGL(canvas, reducedMotion) {
   if (!canvas || !window.WebGLRenderingContext) {
     canvas?.closest('.hero')?.classList.add('webgl-fallback');
     return () => {};
   }
-  const THREE = await import('three');
 
   let renderer;
   try {
@@ -165,15 +165,10 @@ function initialiseSpotlights() {
 export async function initialiseViewEffects(screen) {
   cleanupCurrent();
   const cleanups = [];
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    || new URLSearchParams(window.location.search).get('motion') === 'reduce';
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (screen === 'public') {
-    const cinematicRoot = document.querySelector('[data-cinematic-section]');
-    if (cinematicRoot) {
-      const { initialiseCinematic } = await import('./cinematic.js');
-      cleanups.push(await initialiseCinematic(cinematicRoot, { reducedMotion }));
-    }
+    cleanups.push(initialiseWebGL(document.querySelector('[data-webgl-scene]'), reducedMotion));
     cleanups.push(await initialiseRive(document.querySelector('[data-rive-canvas]')));
   }
 
