@@ -3,7 +3,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Flip } from 'gsap/Flip';
 import Lenis from 'lenis';
 import * as THREE from 'three';
-import { firearmSafetyItems } from './data.js';
 
 gsap.registerPlugin(ScrollTrigger, Flip);
 
@@ -163,57 +162,27 @@ function initialiseSpotlights() {
   return () => handlers.forEach(([card, handler]) => card.removeEventListener('pointermove', handler));
 }
 
-function initialiseSafetyGallery(wrapper, reducedMotion) {
-  const container = wrapper?.querySelector('[data-circular-gallery]');
-  if (!wrapper || !container || reducedMotion || !window.WebGLRenderingContext) return () => {};
+function initialiseSafetyCardGrid(reducedMotion) {
+  const cards = [...document.querySelectorAll('[data-safety-card]')];
+  if (reducedMotion || !cards.length) return () => {};
 
-  let disposed = false;
-  let galleryCleanup = null;
-  let loading = false;
+  gsap.fromTo(cards,
+    { opacity: 0, y: 28, filter: 'blur(5px)' },
+    {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      duration: 0.58,
+      ease: 'power3.out',
+      stagger: 0.055,
+      scrollTrigger: {
+        trigger: cards[0].closest('[data-safety-grid]'),
+        start: 'top 86%',
+        once: true
+      }
+    });
 
-  const activate = async () => {
-    if (disposed || loading || galleryCleanup) return;
-    loading = true;
-    container.dataset.loading = 'true';
-    try {
-      const { mountCircularGallery } = await import('./components/CircularGallery.js');
-      const cleanup = await mountCircularGallery(container, {
-        items: firearmSafetyItems,
-        bend: 2,
-        textColor: '#ffffff',
-        borderRadius: 0.08,
-        scrollSpeed: 1.4,
-        scrollEase: 0.035,
-        font: '700 26px "Barlow Condensed"'
-      });
-      if (disposed) cleanup?.();
-      else galleryCleanup = cleanup;
-    } catch {
-      delete container.dataset.loading;
-      container.dataset.failed = 'true';
-    } finally {
-      loading = false;
-    }
-  };
-
-  let observer = null;
-  if ('IntersectionObserver' in window) {
-    observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      observer.disconnect();
-      activate();
-    }, { rootMargin: '320px 0px' });
-    observer.observe(wrapper);
-  } else {
-    activate();
-  }
-
-  return () => {
-    disposed = true;
-    observer?.disconnect();
-    galleryCleanup?.();
-    delete container.dataset.loading;
-  };
+  return () => gsap.killTweensOf(cards);
 }
 
 export async function initialiseViewEffects(screen) {
@@ -224,7 +193,7 @@ export async function initialiseViewEffects(screen) {
   if (screen === 'public') {
     cleanups.push(initialiseWebGL(document.querySelector('[data-webgl-scene]'), reducedMotion));
     cleanups.push(await initialiseRive(document.querySelector('[data-rive-canvas]')));
-    cleanups.push(initialiseSafetyGallery(document.querySelector('[data-safety-gallery]'), reducedMotion));
+    cleanups.push(initialiseSafetyCardGrid(reducedMotion));
   }
 
   if (!reducedMotion) {

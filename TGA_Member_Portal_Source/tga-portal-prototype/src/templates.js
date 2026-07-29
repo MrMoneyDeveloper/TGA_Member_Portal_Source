@@ -137,22 +137,16 @@ function reviewCards(limit = reviews.length) {
 }
 
 function firearmSafetyGallery() {
-  const fallbackCards = firearmSafetyItems.map((item) => `<figure>
-    <img src="${item.image}" width="${item.width}" height="${item.height}" alt="${escapeHtml(item.alt)}" loading="lazy" decoding="async">
-    <figcaption>${escapeHtml(item.text)}</figcaption>
-  </figure>`).join('');
-  const accessibleItems = firearmSafetyItems.map((item) => `<li>${escapeHtml(item.text)}</li>`).join('');
+  const safetyCards = firearmSafetyItems.map((item) => `<li class="safety-card" data-safety-card>
+    <a class="safety-card__link" href="${item.image}" target="_blank" rel="noopener noreferrer" aria-label="Open full safety panel: ${escapeHtml(item.text)}">
+      <img src="${item.image}" width="${item.width}" height="${item.height}" alt="${escapeHtml(`${item.text}. ${item.alt}`)}" loading="lazy" decoding="async">
+    </a>
+  </li>`).join('');
 
   return `<section class="section firearm-safety-section" id="firearm-safety">
     <div class="site-container">
       ${sectionHeading('Responsible ownership', 'Firearm Safety', 'Responsible firearm ownership starts with safe handling, secure storage, proper training and respect for the law.')}
-      <div class="firearm-safety-gallery" data-safety-gallery>
-        <div class="circular-gallery" data-circular-gallery tabindex="0" role="region" aria-label="Circular firearm-safety image gallery" aria-describedby="gallery-instructions"></div>
-        <p class="gallery-instructions" id="gallery-instructions"><strong>Explore the gallery:</strong> drag horizontally or use the left and right arrow keys.</p>
-        <p class="gallery-status" data-gallery-status aria-live="polite"></p>
-        <ol class="visually-hidden">${accessibleItems}</ol>
-        <div class="safety-gallery-fallback" data-gallery-fallback>${fallbackCards}</div>
-      </div>
+      <ul class="safety-card-grid" data-safety-grid aria-label="Firearm safety information">${safetyCards}</ul>
       <p class="safety-disclaimer">Safety information is educational and does not replace accredited training or legal advice. Always follow applicable South African firearm legislation and range rules.</p>
     </div>
   </section>`;
