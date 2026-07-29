@@ -4,6 +4,7 @@ import {
   contactPlaceholders,
   credibilityItems,
   faqs,
+  firearmSafetyItems,
   imageAssets,
   journeySteps,
   membershipPlans,
@@ -96,12 +97,13 @@ function publicNavigation(currentPath, mobile = false) {
       ${links}
       ${routeLink('/resources#assessments', 'Assessments', currentPath)}
       ${routeLink('/resources#compliance', 'Compliance', currentPath)}
+      ${routeLink('/resources#firearm-safety', 'Firearm safety', currentPath)}
       <button class="button button--outline" data-action="login">Member login</button><button class="button button--brass" data-action="apply">Join TGA</button>
     </nav>`;
   }
   return `<nav class="desktop-navigation" aria-label="Primary navigation">
     ${routeLink('/', 'Home', currentPath)}${routeLink('/about', 'About TGA', currentPath)}${routeLink('/membership', 'Membership', currentPath)}${routeLink('/training', 'Training', currentPath)}
-    <details class="nav-dropdown"><summary ${currentPath === '/resources' ? 'aria-current="page"' : ''}>Resources ${icon('solar:alt-arrow-down-linear')}</summary><div><a href="/resources" data-route>Resources overview</a>${routeLink('/resources#assessments', 'Assessments', currentPath)}${routeLink('/resources#compliance', 'Compliance', currentPath)}${routeLink('/resources#ownership', 'Responsible ownership', currentPath)}${routeLink('/resources#faq', 'FAQ', currentPath)}</div></details>
+    <details class="nav-dropdown"><summary ${currentPath === '/resources' ? 'aria-current="page"' : ''}>Resources ${icon('solar:alt-arrow-down-linear')}</summary><div><a href="/resources" data-route>Resources overview</a>${routeLink('/resources#assessments', 'Assessments', currentPath)}${routeLink('/resources#compliance', 'Compliance', currentPath)}${routeLink('/resources#ownership', 'Responsible ownership', currentPath)}${routeLink('/resources#firearm-safety', 'Firearm safety', currentPath)}${routeLink('/resources#faq', 'FAQ', currentPath)}</div></details>
     ${routeLink('/contact', 'Contact', currentPath)}
   </nav>`;
 }
@@ -132,6 +134,28 @@ function closingCta(title = 'Begin the journey or explore the working portal.') 
 
 function reviewCards(limit = reviews.length) {
   return `<div class="review-stack">${reviews.slice(0, limit).map(([title, text]) => `<article><span>Review placeholder</span><h3>${title}</h3><p>${text}</p><dl><div><dt>Member</dt><dd>To be verified</dd></div><div><dt>Membership</dt><dd>To be verified</dd></div><div><dt>Province</dt><dd>To be verified</dd></div></dl></article>`).join('')}</div>`;
+}
+
+function firearmSafetyGallery() {
+  const fallbackCards = firearmSafetyItems.map((item) => `<figure>
+    <img src="${item.image}" width="${item.width}" height="${item.height}" alt="${escapeHtml(item.alt)}" loading="lazy" decoding="async">
+    <figcaption>${escapeHtml(item.text)}</figcaption>
+  </figure>`).join('');
+  const accessibleItems = firearmSafetyItems.map((item) => `<li>${escapeHtml(item.text)}</li>`).join('');
+
+  return `<section class="section firearm-safety-section" id="firearm-safety">
+    <div class="site-container">
+      ${sectionHeading('Responsible ownership', 'Firearm Safety', 'Responsible firearm ownership starts with safe handling, secure storage, proper training and respect for the law.')}
+      <div class="firearm-safety-gallery" data-safety-gallery>
+        <div class="circular-gallery" data-circular-gallery tabindex="0" role="region" aria-label="Circular firearm-safety image gallery" aria-describedby="gallery-instructions"></div>
+        <p class="gallery-instructions" id="gallery-instructions"><strong>Explore the gallery:</strong> drag horizontally or use the left and right arrow keys.</p>
+        <p class="gallery-status" data-gallery-status aria-live="polite"></p>
+        <ol class="visually-hidden">${accessibleItems}</ol>
+        <div class="safety-gallery-fallback" data-gallery-fallback>${fallbackCards}</div>
+      </div>
+      <p class="safety-disclaimer">Safety information is educational and does not replace accredited training or legal advice. Always follow applicable South African firearm legislation and range rules.</p>
+    </div>
+  </section>`;
 }
 
 function homePage() {
@@ -175,6 +199,7 @@ function resourcesPage() {
     <section class="section" id="compliance"><div class="site-container editorial-grid editorial-grid--reverse"><div class="editorial-media" data-reveal>${picture(imageAssets.consultation, 'image-frame')}<div class="media-note"><strong>Prototype privacy boundary</strong><span>No application or file contents are transmitted.</span></div></div><div>${sectionHeading('Compliance support', 'Documents handled with clarity and appropriate caution.', 'The member experience demonstrates document checklists, upload validation, visible review states and professional escalation. Production controls require security and legal approval.')}<div class="compliance-points"><article>${icon('solar:folder-security-linear')}<h3>Private by intent</h3><p>Encrypted storage, access control and malware scanning remain backend requirements.</p></article><article>${icon('solar:history-linear')}<h3>Visible review trail</h3><p>Members can understand document status, expiry and requested changes.</p></article></div><button class="text-button" data-action="privacy">Read the prototype privacy notice ${icon('solar:arrow-right-linear')}</button></div></div></section>
     <section class="section section--panel" id="assessments"><div class="site-container assessment-callout"><div>${sectionHeading('Assessment resources', 'Understand the demonstration assessment journey.', 'Approved questions, pass marks, validity periods and retake policies must be supplied by TGA before publication.')}<p class="resource-copy">The member portal demonstrates assigned assessments, visible progress, local results and administrator review.</p><a class="button button--outline" href="/training#assessments" data-route>Explore training and assessments</a></div><aside><span>GENERAL GUIDANCE</span><strong>Approved content required</strong><p>No accreditation or competency outcome is claimed.</p>${icon('solar:notebook-linear')}</aside></div></section>
     <section class="section ownership-section" id="ownership"><div class="site-container">${sectionHeading('Responsible ownership', 'Safety, secure storage and lawful participation come first.', 'The public experience promotes calm, responsible participation and directs authoritative questions to qualified professionals or relevant authorities.')}<div class="ownership-grid">${responsiblePrinciples.map(([name, title, text]) => `<article data-reveal>${icon(name)}<h3>${title}</h3><p>${text}</p></article>`).join('')}</div></div></section>
+    ${firearmSafetyGallery()}
     <section class="section section--panel" id="faq"><div class="site-container faq-container">${sectionHeading('Frequently asked questions', 'Useful information before you begin.', 'General prototype guidance only. TGA must approve final requirements and wording.')}<div class="faq-list">${faqs.map(([question, answer]) => `<details><summary>${question}${icon('solar:add-circle-linear')}</summary><p>${answer}</p></details>`).join('')}</div></div></section>
     ${closingCta('Find the right information or ask for appropriate professional support.')}
   </main>`;

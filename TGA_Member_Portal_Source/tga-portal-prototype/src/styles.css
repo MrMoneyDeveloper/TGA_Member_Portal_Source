@@ -5,6 +5,7 @@
 @import '@fontsource/barlow-condensed/600.css';
 @import '@fontsource/barlow-condensed/700.css';
 @import 'bootstrap/dist/css/bootstrap.min.css';
+@import './components/CircularGallery.css';
 
 :root {
   --tga-black: #070708;
