@@ -6,7 +6,7 @@ const modulo = (value, length) => ((value % length) + length) % length;
 function createTextTexture(gl, text, font, colour) {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
-  const maxWidth = 620;
+  const maxWidth = 360;
   const words = text.split(' ');
   const lines = [];
   let line = '';
@@ -23,27 +23,29 @@ function createTextTexture(gl, text, font, colour) {
   });
   if (line) lines.push(line);
 
-  canvas.width = 680;
-  canvas.height = Math.max(72, lines.length * 34 + 24);
+  const visibleLines = lines.slice(0, 2);
+  const widestLine = Math.max(...visibleLines.map((value) => context.measureText(value).width), 1);
+  canvas.width = Math.ceil(widestLine + 36);
+  canvas.height = Math.max(66, visibleLines.length * 34 + 22);
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.font = font;
   context.fillStyle = colour;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  lines.slice(0, 2).forEach((value, index) => {
-    const offset = (index - (Math.min(lines.length, 2) - 1) / 2) * 34;
+  visibleLines.forEach((value, index) => {
+    const offset = (index - (visibleLines.length - 1) / 2) * 34;
     context.fillText(value, canvas.width / 2, canvas.height / 2 + offset);
   });
 
   const texture = new Texture(gl, { generateMipmaps: false });
   texture.image = canvas;
-  return texture;
+  return { texture, width: canvas.width, height: canvas.height };
 }
 
 class GalleryTitle {
   constructor({ gl, parent, text, colour, font }) {
     const geometry = new Plane(gl);
-    const texture = createTextTexture(gl, text, font, colour);
+    const { texture, width, height } = createTextTexture(gl, text, font, colour);
     const program = new Program(gl, {
       vertex: `
         attribute vec3 position;
@@ -73,8 +75,10 @@ class GalleryTitle {
     });
 
     this.mesh = new Mesh(gl, { geometry, program });
-    this.mesh.scale.set(0.96, 0.15, 1);
-    this.mesh.position.y = -0.66;
+    const ratio = width / height;
+    const titleWidth = 0.92;
+    this.mesh.scale.set(titleWidth, Math.min(0.28, Math.max(0.14, titleWidth / ratio)), 1);
+    this.mesh.position.y = -0.73;
     this.mesh.setParent(parent);
   }
 }
@@ -147,15 +151,17 @@ class GalleryMedia {
         }
 
         void main() {
-          vec2 ratio = vec2(
-            min((uPlaneSizes.x / uPlaneSizes.y) / (uImageSizes.x / uImageSizes.y), 1.0),
-            min((uPlaneSizes.y / uPlaneSizes.x) / (uImageSizes.y / uImageSizes.x), 1.0)
-          );
-          vec2 imageUv = vec2(
-            vUv.x * ratio.x + (1.0 - ratio.x) * 0.5,
-            vUv.y * ratio.y + (1.0 - ratio.y) * 0.5
-          );
-          vec4 colour = texture2D(tMap, imageUv);
+          float planeAspect = uPlaneSizes.x / uPlaneSizes.y;
+          float imageAspect = uImageSizes.x / uImageSizes.y;
+          vec2 contain = vec2(1.0);
+          if (planeAspect > imageAspect) contain.x = imageAspect / planeAspect;
+          else contain.y = planeAspect / imageAspect;
+
+          vec2 imageUv = (vUv - 0.5) / contain + 0.5;
+          vec4 colour = vec4(0.025, 0.025, 0.03, 1.0);
+          if (imageUv.x >= 0.0 && imageUv.x <= 1.0 && imageUv.y >= 0.0 && imageUv.y <= 1.0) {
+            colour = texture2D(tMap, imageUv);
+          }
           float distance = roundedBoxSDF(vUv - 0.5, vec2(0.5 - uBorderRadius), uBorderRadius);
           float alpha = 1.0 - smoothstep(-0.002, 0.002, distance);
           gl_FragColor = vec4(colour.rgb, alpha);
@@ -190,7 +196,7 @@ class GalleryMedia {
     if (viewport) this.viewport = viewport;
     const scale = this.screen.height / 1500;
     this.plane.scale.y = (this.viewport.height * (900 * scale)) / this.screen.height;
-    this.plane.scale.x = (this.viewport.width * (700 * scale)) / this.screen.width;
+    this.plane.scale.x = (this.viewport.width * (1100 * scale)) / this.screen.width;
     this.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
     this.padding = this.screen.width < 640 ? 0.85 : 1.35;
     this.width = this.plane.scale.x + this.padding;
