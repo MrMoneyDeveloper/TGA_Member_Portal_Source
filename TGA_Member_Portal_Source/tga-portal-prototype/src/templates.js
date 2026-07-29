@@ -36,7 +36,7 @@ export function picture(asset, className = '', eager = false) {
 }
 
 function logo(label = true) {
-  return `<span class="brand"><img src="/tga-mark.svg" width="48" height="48" alt=""><span>${label ? '<strong>The Gun Association</strong><small>Member services prototype</small>' : ''}</span></span>`;
+  return `<span class="brand ${label ? 'brand--full' : 'brand--compact'}"><span class="brand-logo"><img src="/tga-logo.png" width="1536" height="1024" alt="The Gun Association"></span></span>`;
 }
 
 function sectionHeading(eyebrow, title, text, id = '') {
