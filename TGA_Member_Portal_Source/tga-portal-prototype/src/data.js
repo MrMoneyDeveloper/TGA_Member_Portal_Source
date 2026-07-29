@@ -54,17 +54,17 @@ export const responsiblePrinciples = [
 ];
 
 export const firearmSafetyItems = [
+  { image: '/images/gun-safety/accredited-training.webp', text: 'Firearm Safety', alt: 'Firearm-safety overview card with responsible ownership guidance', width: 354, height: 412 },
   { image: '/images/gun-safety/treat-as-loaded.webp', text: 'Treat Every Firearm as Loaded', alt: 'Generic unbranded handgun resting on a wooden counter with ammunition nearby', width: 404, height: 412 },
   { image: '/images/gun-safety/safe-direction.webp', text: 'Always Use a Safe Direction', alt: 'Adult at an authorised outdoor range directing a handgun toward the target area', width: 379, height: 412 },
   { image: '/images/gun-safety/finger-off-trigger.webp', text: 'Keep Your Finger Off the Trigger', alt: 'Close view of an adult holding an unbranded handgun with the index finger outside the trigger guard', width: 386, height: 412 },
   { image: '/images/gun-safety/target-and-beyond.webp', text: 'Know Your Target and Beyond', alt: 'Authorised outdoor shooting lane with a paper target and earthen backstop', width: 354, height: 280 },
   { image: '/images/gun-safety/secure-storage.webp', text: 'Secure Firearm Storage', alt: 'Closed black security safe with a digital keypad in a controlled storage area', width: 404, height: 280 },
-  { image: '/images/gun-safety/separate-ammunition.webp', text: 'Store Ammunition Separately', alt: 'Firearm-safety reminder about preventing unauthorised access', width: 379, height: 280 },
-  { image: '/images/gun-safety/correct-ammunition.webp', text: 'Use the Correct Ammunition', alt: 'Organised cartridges and an ammunition container on a wooden bench', width: 404, height: 324 },
-  { image: '/images/gun-safety/eye-ear-protection.webp', text: 'Wear Eye and Ear Protection', alt: 'Protective shooting glasses and hearing protection arranged on a wooden range bench', width: 379, height: 324 },
+  { image: '/images/gun-safety/separate-ammunition.webp', text: 'Keep Firearms Away From Children', alt: 'Child near an unsecured handgun, reinforcing the need to prevent unauthorised access', width: 379, height: 280 },
   { image: '/images/gun-safety/maintenance.webp', text: 'Regular Inspection and Maintenance', alt: 'Closed unbranded firearm case beside a professional maintenance kit', width: 386, height: 280 },
   { image: '/images/gun-safety/approved-holster.webp', text: 'Use an Approved Holster', alt: 'Adult carrying an unbranded handgun in a covered-trigger holster', width: 354, height: 324 },
-  { image: '/images/gun-safety/accredited-training.webp', text: 'Complete Accredited Training', alt: 'Firearm-safety overview card reinforcing responsible ownership', width: 354, height: 412 },
+  { image: '/images/gun-safety/correct-ammunition.webp', text: 'Use the Correct Ammunition', alt: 'Organised cartridges and an ammunition container on a wooden bench', width: 404, height: 324 },
+  { image: '/images/gun-safety/eye-ear-protection.webp', text: 'Wear Eye and Ear Protection', alt: 'Protective shooting glasses and hearing protection arranged on a wooden range bench', width: 379, height: 324 },
   { image: '/images/gun-safety/legal-compliance.webp', text: 'Follow South African Firearm Laws', alt: 'Scales of justice graphic representing lawful firearm ownership', width: 386, height: 324 }
 ];
 

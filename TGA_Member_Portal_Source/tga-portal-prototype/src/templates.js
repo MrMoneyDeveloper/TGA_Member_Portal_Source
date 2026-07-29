@@ -137,7 +137,7 @@ function reviewCards(limit = reviews.length) {
 }
 
 function firearmSafetyGallery() {
-  const safetyCards = firearmSafetyItems.map((item) => `<li class="safety-card" data-safety-card>
+  const safetyCards = firearmSafetyItems.map((item) => `<li class="safety-card" data-safety-card style="--source-width: ${item.width}; --source-height: ${item.height};">
     <a class="safety-card__link" href="${item.image}" target="_blank" rel="noopener noreferrer" aria-label="Open full safety panel: ${escapeHtml(item.text)}">
       <img src="${item.image}" width="${item.width}" height="${item.height}" alt="${escapeHtml(`${item.text}. ${item.alt}`)}" loading="lazy" decoding="async">
     </a>
