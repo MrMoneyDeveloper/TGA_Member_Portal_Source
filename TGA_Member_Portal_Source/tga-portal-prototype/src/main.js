@@ -1,24 +1,19 @@
 import 'iconify-icon';
 import './styles.css';
 import { publicConfig } from './config.js';
-import { assessmentQuestions, chatTopics, demoMembers, demoUsers, initialDocuments } from './data.js';
+import { chatTopics } from './data.js';
+import { createDemoApi, DEMO_ACCOUNTS } from './demo-api.js';
+import { applicationContent, assessmentContent, loginTemplate, memberDetailContent, paymentContent, portalTemplate, uploadContent, reviewContent, assessmentConfigContent, date, money } from './portal-views.js';
 import { destroyViewEffects, flipCard, initialiseViewEffects } from './effects.js';
 import {
-  applicationContent,
-  assessmentContent,
   chatContent,
   escapeHtml,
   guideContent,
-  loginTemplate,
-  memberDetailContent,
   memberRows,
-  paymentContent,
-  portalTemplate,
   privacyContent,
   publicRoutes,
   publicTemplate,
-  termsContent,
-  uploadContent
+  termsContent
 } from './templates.js';
 
 const app = document.querySelector('#app');
@@ -42,34 +37,22 @@ const storage = {
   }
 };
 
-function storedDocuments() {
-  try {
-    const parsed = JSON.parse(storage.get('tga-documents', 'null'));
-    return Array.isArray(parsed) ? parsed : [...initialDocuments];
-  } catch { return [...initialDocuments]; }
-}
-
-const storedResult = storage.get('tga-test-result');
-const normalizePath = (path = '/') => {
-  const normalized = `/${String(path).replace(/^\/+|\/+$/g, '')}`;
-  return normalized === '//' ? '/' : normalized;
-};
+const api = createDemoApi();
+const normalizePath = (path = '/') => '/' + String(path).replace(/^\/+|\/+$/g, '');
 const initialPath = normalizePath(window.location.pathname);
-const initialScreen = initialPath === '/login' || initialPath === '/portal' ? 'login' : 'public';
-const state = {
-  screen: initialScreen,
-  publicPath: initialScreen === 'public' ? initialPath : '/',
-  authenticated: false,
-  role: 'member',
-  active: 'overview',
-  memberQuery: '',
-  memberStatus: 'All statuses',
-  members: demoMembers.map((member) => ({ ...member })),
-  documents: storedDocuments(),
-  testResult: storedResult === null ? null : Number(storedResult)
-};
-
-if (initialPath === '/portal') window.history.replaceState(null, '', '/login');
+const state = { screen: ['/login','/portal'].includes(initialPath)?'login':'public', publicPath: '/', authenticated:false, role:'member', active:'overview', memberQuery:'', memberStatus:'All statuses', members:[], documents:[], attempts:[], payments:[], assessments:[], notifications:[], history:[], audit:[], allowedSections:[], profile:null, user:null };
+if (state.screen === 'public') state.publicPath = initialPath;
+async function refreshPortal() {
+  try {const snapshot=await api.snapshot();Object.assign(state,snapshot);state.members=state.members.map(m=>({...m,expiry:date(m.endDate)}));state.role=state.user.role==='member'?'member':'admin';if(!state.allowedSections.includes(state.active))state.active=state.allowedSections[0];state.error='';}
+  catch(error){state.error=error.message;throw error;}
+}
+async function runAction(target,work) {
+  if(target?.disabled)return;
+  if(target) {target.disabled=true;target.setAttribute('aria-busy','true');}
+  try {await work();}catch(error){toast(error.message,'warning');}
+  finally {if(target){target.disabled=false;target.removeAttribute('aria-busy');}}
+}
+function downloadText(name,content,type='text/plain') {const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
 function filteredMembers() {
   const query = state.memberQuery.trim().toLowerCase();
@@ -195,9 +178,10 @@ function setFormError(form, message) {
   if (message) error.focus?.();
 }
 
-function openPortal(role) {
-  state.role = role;
-  state.active = role === 'admin' ? 'dashboard' : 'overview';
+async function openPortal(user) {
+  state.user = user;
+  state.active = user.role === 'member' ? 'overview' : 'dashboard';
+  await refreshPortal();
   state.screen = 'portal';
   state.authenticated = true;
   closeDialog();
@@ -213,10 +197,11 @@ function updateMemberTable() {
   if (count) count.textContent = `${members.length} illustrative records shown`;
 }
 
-function exportMembers() {
+async function exportMembers() {
   const headers = ['Member number', 'Name', 'Email', 'Province', 'Plan', 'Status', 'Expiry', 'Documents', 'Assessment'];
-  const quote = (value) => `"${String(value).replaceAll('"', '""')}"`;
-  const rows = filteredMembers().map((member) => [member.id, member.name, member.email, member.province, member.plan, member.status, member.expiry, member.documents, member.assessment]);
+  const quote = (value) => `"${String(value ?? '').replace(/^[=+@\-\t\r]/, (c) => "'" + c).replaceAll('"', '""')}"`;
+  const records = await api.exportMembers();
+  const rows = records.map((member) => [member.id, member.name, member.email, member.province, member.plan, member.status, date(member.endDate), member.documents, member.assessment]);
   const csv = [headers, ...rows].map((row) => row.map(quote).join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -239,7 +224,7 @@ function chatReply(message) {
   return match?.[1] || 'I can help with membership, renewals, documents, assessments, payments, training, portal support or consulting requests. This prototype does not send your question.';
 }
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const actionTarget = event.target.closest('[data-action]');
   const action = actionTarget?.dataset.action;
   const routeTarget = event.target.closest('a[data-route]');
@@ -260,25 +245,32 @@ document.addEventListener('click', (event) => {
 
   if (action === 'home') { event.preventDefault(); navigatePublic('/'); }
   if (action === 'login') { closeDialog(); navigateLogin(); }
-  if (action === 'logout') { state.authenticated = false; navigatePublic('/'); }
-  if (action === 'apply') showDialog('Start a TGA application', applicationContent());
-  if (action === 'privacy') showNotice('Prototype privacy and POPIA notice', privacyContent());
-  if (action === 'terms') showNotice('Prototype terms', termsContent());
-  if (action === 'guide') showDialog('Prototype guide', guideContent());
-  if (action === 'forgot-password') showNotice('Password recovery is not connected', '<div class="information-modal"><p class="information-intro">A production service requires verified email delivery, secure reset tokens, expiry rules, audit events and abuse protection.</p><aside><strong>Demo access</strong><p>Use one of the stakeholder accounts shown on the login screen.</p></aside></div>');
-  if (action === 'consulting') showNotice('Professional assistance', '<div class="information-modal"><p class="information-intro">Verified consultation, referral and booking details must be supplied by TGA before publication.</p><aside><strong>No request is sent</strong><p>This prototype does not collect or transmit consulting enquiries.</p></aside></div>');
-  if (action === 'assessment') showDialog('Safety & Compliance Foundation', assessmentContent(assessmentQuestions));
-  if (action === 'upload') showDialog('Upload a document', uploadContent());
-  if (action === 'payment') showDialog('PayFast checkout preview', paymentContent());
-  if (action === 'chat') showDialog('TGA prototype assistant', chatContent());
-  if (action === 'simulate-payment') { closeDialog(); toast('Simulated payment completed successfully.', 'success'); }
-  if (action === 'support') { document.querySelector('#portal-mobile-dialog')?.close(); toast('Prototype support request created. No message was sent.'); }
-  if (action === 'notifications') toast('You have two illustrative portal notifications.');
-  if (action === 'approve-document') toast('Prototype document approved.', 'success');
-  if (action === 'request-changes') toast('Prototype change request recorded.');
-  if (action === 'export-members') exportMembers();
-  if (action === 'open-documents') { state.active = 'documents'; render(); }
-  if (action === 'document-detail') showNotice('Document metadata', '<div class="information-modal"><p class="information-intro">Only demonstration metadata is available. No file content is stored or downloadable.</p></div>');
+  if (action === 'logout') await runAction(actionTarget,async()=>{await api.logout();state.authenticated=false;navigatePublic('/');});
+  if (action === 'apply') showDialog('Start a demo application', applicationContent());
+  if (action === 'privacy') showNotice('Sandbox privacy notice', privacyContent());
+  if (action === 'terms') showNotice('Sandbox terms', termsContent());
+  if (action === 'guide') showDialog('Client POC guide', guideContent());
+  if (action === 'forgot-password') showDialog('Demo password reminder','<form id="recovery-form" class="dialog-form"><p>This POC uses public demo credentials. Enter your demo login email for a reminder.</p><label>Email<input type="email" name="email" required></label><p class="form-error" data-form-error role="alert" hidden></p><button type="submit" class="button button--brass">Show demo reminder</button></form>');
+  if (action === 'consulting') showNotice('Professional assistance','<div class="information-modal"><p>Verified consultation and booking details must be supplied by TGA. No request is sent.</p></div>');
+  if (action === 'assessment') await runAction(actionTarget,async()=>{const attempt=await api.startAssessment(actionTarget.dataset.assessmentId||state.assessments[0]?.id);showDialog(attempt.title,assessmentContent(attempt));});
+  if (action === 'upload') showDialog('Upload a sample document',uploadContent());
+  if (action === 'payment') await runAction(actionTarget,async()=>{const p=await api.checkout();showDialog('Mock payment checkout',paymentContent(p));});
+  if (action === 'complete-payment') await runAction(actionTarget,async()=>{const p=await api.completePayment(actionTarget.dataset.paymentId,actionTarget.dataset.outcome);closeDialog();await refreshPortal();render();showNotice('Mock payment '+p.status,'<div class="success-state"><h3>'+escapeHtml(p.status)+'</h3><p>'+escapeHtml(p.reference)+' · '+money(p.amount)+'</p><p>No real money moved. The outcome is saved in Payment history.</p></div>');});
+  if (action === 'chat') showDialog('TGA prototype assistant',chatContent());
+  if (action === 'support') showDialog('Demo support request','<form id="support-form" class="dialog-form"><p>This records a local demo ticket. No message is sent to TGA.</p><label>Description<textarea name="message" required maxlength="1000"></textarea></label><p class="form-error" data-form-error role="alert" hidden></p><button class="button button--brass" type="submit">Create demo ticket</button></form>');
+  if (action === 'notifications') showNotice('Notifications','<div class="information-modal">'+(state.notifications.map(n=>'<section><div><h3>'+escapeHtml(n.title.replaceAll('-',' '))+'</h3><p>'+escapeHtml(n.message)+'</p><small>'+date(n.createdUtc)+' · '+escapeHtml(n.status)+'</small></div></section>').join('')||'<p>No notifications yet.</p>')+'</div>');
+  if (action === 'export-members') await runAction(actionTarget,exportMembers);
+  if (action === 'open-documents') {state.active='documents';render();}
+  if (action === 'reload-portal') await runAction(actionTarget,async()=>{await refreshPortal();render();});
+  if (action === 'document-detail') await runAction(actionTarget,async()=>{const d=await api.document(actionTarget.dataset.documentId);showNotice('Demo document metadata','<div class="information-modal"><h3>'+escapeHtml(d.name)+'</h3><p>'+escapeHtml(d.type)+' · '+escapeHtml(d.status)+' · '+date(d.date)+'</p><p>'+escapeHtml(d.reason||'No review notes yet.')+'</p><p>Only metadata is stored. This download creates a fictional sample record, not the selected file.</p><button class="button button--outline" data-action="download-sample" data-document-id="'+escapeHtml(d.id)+'">Download demo record</button></div>');});
+  if (action === 'download-sample') await runAction(actionTarget,async()=>{const d=await api.document(actionTarget.dataset.documentId);downloadText('TGA-DEMO-document.txt','TGA DEMONSTRATION RECORD\nNOT AN IDENTITY, LICENCE OR TRAINING DOCUMENT\n\nName: '+d.name+'\nType: '+d.type+'\nStatus: '+d.status+'\nReference: '+d.id+'\nNo original file contents are stored.');});
+  if (action === 'review-document') {const d=state.documents.find(d=>d.id===actionTarget.dataset.documentId);if(d)showDialog('Review demo document',reviewContent(d));}
+  if (action === 'assessment-config') {const a=state.assessments.find(a=>a.id===actionTarget.dataset.assessmentId);if(a)showDialog('Assessment demo rules',assessmentConfigContent(a));}
+  if (action === 'receipt') {const p=state.payments.find(p=>p.id===actionTarget.dataset.paymentId);if(p)downloadText(p.reference+'.txt','TGA MOCK RECEIPT — NO MONEY MOVED\n'+p.reference+'\n'+p.description+'\n'+money(p.amount)+'\n'+p.status+'\n'+date(p.createdUtc));}
+  if (action === 'certificate') {const a=state.attempts.find(a=>a.id===actionTarget.dataset.attemptId&&a.passed);if(a)downloadText('TGA-DEMO-certificate.txt','TGA DEMO / NON-ACCREDITED PARTICIPATION RECORD\nNot firearm competency, a licence or accredited training.\n\n'+state.profile.name+'\n'+a.title+'\nScore: '+a.percentage+'%\n'+date(a.submittedUtc)+'\nReference: '+a.id);}
+  if (action === 'refund') showDialog('Simulate refund','<form id="refund-form" class="dialog-form" data-payment-id="'+escapeHtml(actionTarget.dataset.paymentId)+'"><p>No real money moves. Membership dates stay unchanged pending confirmed refund policy.</p><label>Reason<textarea name="reason" required maxlength="500"></textarea></label><p class="form-error" data-form-error role="alert" hidden></p><button type="submit" class="button button--brass">Record mock refund</button></form>');
+  if (action === 'reset-demo') showDialog('Reset local demo records','<div class="information-modal"><p>This restores the original fictional records and removes changes made in this browser.</p><button class="button button--brass" data-action="confirm-reset">Restore demo fixtures</button><button class="button button--outline" data-close-dialog>Keep my changes</button></div>');
+  if (action === 'confirm-reset') await runAction(actionTarget,async()=>{await api.reset();closeDialog();await refreshPortal();render();toast('Demo records restored.','success');});
 
   if (action === 'toggle-public-menu') {
     const menu = document.querySelector('#public-mobile-menu');
@@ -306,16 +298,8 @@ document.addEventListener('click', (event) => {
     }
   }
 
-  const demoRole = event.target.closest('[data-demo-role]');
-  if (demoRole) {
-    const account = demoUsers[demoRole.dataset.demoRole];
-    const form = document.querySelector('#login-form');
-    form.elements.email.value = account.email;
-    form.elements.password.value = account.password;
-    document.querySelectorAll('[data-demo-role]').forEach((button) => button.classList.toggle('selected', button === demoRole));
-    form.querySelector('button[type="submit"]').focus();
-    toast(`${account.label} credentials selected.`);
-  }
+  const demoAccount=event.target.closest('[data-demo-account]');
+  if(demoAccount){const account=DEMO_ACCOUNTS[Number(demoAccount.dataset.demoAccount)];const form=document.querySelector('#login-form');form.elements.email.value=account.email;form.elements.password.value=account.password;form.querySelector('button[type="submit"]').focus();toast(account.label+' credentials selected.');}
 
   if (action === 'application-next') {
     const form = actionTarget.closest('form');
@@ -340,7 +324,9 @@ document.addEventListener('click', (event) => {
 
   const portalSection = event.target.closest('[data-portal-section]');
   if (portalSection) {
+    if(!state.allowedSections.includes(portalSection.dataset.portalSection))return;
     state.active = portalSection.dataset.portalSection;
+    try {await refreshPortal();}catch(error){toast(error.message,'warning');}
     document.querySelector('#portal-mobile-dialog')?.close();
     render();
   }
@@ -352,10 +338,10 @@ document.addEventListener('click', (event) => {
   }
   if (action === 'close-portal-menu') document.querySelector('#portal-mobile-dialog')?.close();
 
-  const memberButton = event.target.closest('[data-member-id]');
+  const memberButton = event.target.closest('button[data-member-id]');
   if (memberButton) {
     const member = state.members.find((item) => item.id === memberButton.dataset.memberId);
-    if (member) showDialog('Member record', memberDetailContent(member));
+    if (member) showDialog('Member record', memberDetailContent(member,state));
   }
 
   const topicButton = event.target.closest('[data-chat-topic]');
@@ -366,61 +352,28 @@ document.addEventListener('click', (event) => {
   }
 });
 
-document.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const form = event.target;
-
-  if (form.id === 'login-form') {
-    if (!form.checkValidity()) { form.reportValidity(); return; }
-    const data = new FormData(form);
-    const email = String(data.get('email')).trim().toLowerCase();
-    const password = String(data.get('password'));
-    const role = Object.entries(demoUsers).find(([, account]) => account.email === email && account.password === password)?.[0];
-    if (!role) { setFormError(form, 'Those details do not match either stakeholder demo account.'); return; }
-    setFormError(form, '');
-    if (data.get('remember')) storage.set('tga-remember-email', email); else storage.remove('tga-remember-email');
-    openPortal(role);
-  }
-
-  if (form.id === 'application-form') {
-    if (!form.checkValidity()) { form.reportValidity(); setFormError(form, 'Complete the required fields and accept the prototype privacy notice.'); return; }
-    siteDialogTitle.textContent = 'Prototype application created';
-    siteDialogContent.innerHTML = '<div class="success-state"><iconify-icon icon="solar:check-circle-bold" aria-hidden="true"></iconify-icon><h3>Application journey complete</h3><p>No information was transmitted or stored. Your illustrative reference is <strong>TGA-DEMO-2026-0722</strong>.</p><button class="button button--brass" data-action="login">Continue to demo login</button></div>';
-  }
-
-  if (form.id === 'assessment-form') {
-    if (!form.checkValidity()) { form.reportValidity(); return; }
-    const data = new FormData(form);
-    let score = 0;
-    assessmentQuestions.forEach((question, index) => { if (Number(data.get(`question-${index}`)) === question[2]) score += 1; });
-    state.testResult = Math.round((score / assessmentQuestions.length) * 100);
-    storage.set('tga-test-result', String(state.testResult));
-    closeDialog();
-    render();
-    toast(`Assessment submitted: ${state.testResult}%.`, state.testResult >= 80 ? 'success' : 'warning');
-  }
-
-  if (form.id === 'upload-form') {
-    const data = new FormData(form);
-    const file = data.get('file');
-    const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
-    const allowedMime = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (!(file instanceof File) || !file.name) { setFormError(form, 'Select a PDF, JPG or PNG file.'); return; }
-    const extension = file.name.split('.').pop()?.toLowerCase();
-    if (!allowedExtensions.includes(extension) || !allowedMime.includes(file.type)) { setFormError(form, 'The selected file must be a valid PDF, JPG or PNG.'); return; }
-    if (file.size > 5 * 1024 * 1024) { setFormError(form, 'The selected file is larger than 5 MB.'); return; }
-    if (!data.get('uploadConsent')) { setFormError(form, 'Accept the local prototype-processing notice before continuing.'); return; }
-    const record = { id: Date.now(), name: file.name, type: String(data.get('type')), date: new Intl.DateTimeFormat('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date()), status: 'In review', size: `${(file.size / 1024 / 1024).toFixed(1)} MB` };
-    state.documents.unshift(record);
-    storage.set('tga-documents', JSON.stringify(state.documents));
-    closeDialog();
-    render();
-    toast('Document metadata added for prototype review.', 'success');
-  }
-
-  if (form.id === 'profile-form') {
-    if (!form.checkValidity()) { form.reportValidity(); return; }
-    toast('Profile changes validated. Nothing was sent or stored.');
+document.addEventListener('submit', async (event) => {
+  event.preventDefault();const form=event.target;
+  if(form.id!=='chat-form') {
+    if(!form.checkValidity()){form.reportValidity();return;}
+    const submit=form.querySelector('button[type="submit"]');if(submit?.disabled)return;
+    if(submit){submit.disabled=true;submit.setAttribute('aria-busy','true');}
+    setFormError(form,'');const data=new FormData(form);const values=Object.fromEntries(data.entries());
+    try {
+      if(form.id==='login-form'){const user=await api.login(values.email,values.password);if(values.remember)storage.set('tga-remember-email',values.email);else storage.remove('tga-remember-email');await openPortal(user);}
+      if(form.id==='application-form'){const result=await api.register(values);siteDialogTitle.textContent='Demo application created';siteDialogContent.innerHTML='<div class="success-state"><h3>Your demo login is ready</h3><p>Application '+escapeHtml(result.memberId)+' is waiting for administrator review.</p><p>Email: <strong>'+escapeHtml(result.email)+'</strong><br>Demo password: <strong>'+escapeHtml(result.password)+'</strong></p><p>Saved only in this browser. No information was sent to TGA.</p><button class="button button--brass" data-action="login">Continue to login</button></div>';}
+      if(form.id==='profile-form'){await api.updateProfile(values);await refreshPortal();render();toast('Demo profile saved.','success');}
+      if(form.id==='upload-form'){const file=data.get('file');if(!(file instanceof File)||!file.name)throw new Error('Select a sample file.');if(!values.uploadConsent)throw new Error('Accept local metadata processing.');await api.upload({name:file.name,type:values.type,mime:file.type,sizeBytes:file.size});closeDialog();await refreshPortal();render();toast('Document submitted for demo review.','success');}
+      if(form.id==='assessment-form'){const answers=Object.fromEntries([...data.entries()].map(([key,value])=>[key,Number(value)]));const result=await api.submitAssessment(form.dataset.attemptId,answers);closeDialog();await refreshPortal();render();showNotice('Assessment result','<div class="success-state"><h3>'+result.percentage+'% · '+escapeHtml(result.status)+'</h3><p>Result saved. This is a demo learning check, not accredited training or firearm competency.</p></div>');}
+      if(form.id==='membership-review-form'){await api.changeMembership(form.dataset.memberId,values.status,values.reason);closeDialog();await refreshPortal();render();toast('Membership decision saved.','success');}
+      if(form.id==='document-review-form'){await api.reviewDocument(form.dataset.documentId,values.decision==='approve',values.reason);closeDialog();await refreshPortal();render();toast('Document review saved.','success');}
+      if(form.id==='assessment-config-form'){await api.configureAssessment(form.dataset.assessmentId,{passMark:Number(values.passMark),maxAttempts:Number(values.maxAttempts),timeLimitMinutes:values.timeLimitMinutes?Number(values.timeLimitMinutes):null});closeDialog();await refreshPortal();render();toast('Demo assessment rules saved.','success');}
+      if(form.id==='refund-form'){await api.refund(form.dataset.paymentId,values.reason);closeDialog();await refreshPortal();render();toast('Mock refund recorded.','success');}
+      if(form.id==='recovery-form'){const result=await api.recover(values.email);siteDialogContent.innerHTML='<div class="information-modal"><p>'+ (result?'Public demo login: '+escapeHtml(result.email)+'<br>Password: <strong>'+escapeHtml(result.password)+'</strong>':'No demo account found. Choose an account from the login register.')+'</p><p>No email was sent.</p></div>';}
+      if(form.id==='support-form'){const ticket=await api.support(values.message);closeDialog();await refreshPortal();render();toast('Demo ticket '+ticket.id+' recorded. No message sent.','success');}
+    }catch(error){setFormError(form,error.message);toast(error.message,'warning');}
+    finally {if(submit){submit.disabled=false;submit.removeAttribute('aria-busy');}}
+    return;
   }
 
   if (form.id === 'chat-form') {
@@ -446,15 +399,7 @@ document.addEventListener('change', (event) => {
     label.textContent = file ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB` : 'No file selected';
     setFormError(event.target.form, '');
   }
-  if (event.target.matches('[data-update-member]')) {
-    const member = state.members.find((item) => item.id === event.target.dataset.updateMember);
-    if (member) {
-      member.status = event.target.value;
-      closeDialog();
-      render();
-      toast(`Member status changed to ${member.status}.`, 'success');
-    }
-  }
+
 });
 
 document.addEventListener('keydown', (event) => {
@@ -506,3 +451,5 @@ window.addEventListener('popstate', () => {
 bindDialogBehaviour(siteDialog, '[data-close-dialog]');
 bindDialogBehaviour(noticeDialog, '[data-close-notice]');
 render();
+async function restoreSession(){const user=await api.session();if(user&&initialPath==='/portal'){try{await openPortal(user);}catch(error){toast(error.message,'warning');navigateLogin({replace:true});}}}
+restoreSession();
