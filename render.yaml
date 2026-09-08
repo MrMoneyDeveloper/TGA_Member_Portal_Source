@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: tga-member-api-sandbox
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Sandbox
+      - key: TGA_DATA_MODE
+        value: Demo
+      - key: TGA_PAYMENT_MODE
+        value: Mock
+      - key: TGA_EMAIL_MODE
+        value: Console
+      - key: TGA_SMS_MODE
+        value: Console
+      - key: Jwt__Key
+        generateValue: true
+      - key: AllowedOrigins__0
+        sync: false

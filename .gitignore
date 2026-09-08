@@ -5,3 +5,15 @@ dist/
 *.log
 .env
 .env.*
+!.env.example
+**/bin/
+**/obj/
+**/TestResults/
+**/data/
+*.db
+*.db-shm
+*.db-wal
+.local/
+.vercel/
+**/test-results/
+**/playwright-report/

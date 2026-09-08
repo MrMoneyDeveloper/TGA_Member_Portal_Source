@@ -4,9 +4,12 @@
   "version": "1.0.0",
   "scripts": {
     "build": "npm --prefix ./TGA_Member_Portal_Source/tga-portal-prototype ci && npm --prefix ./TGA_Member_Portal_Source/tga-portal-prototype run build",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test": "npm --prefix ./TGA_Member_Portal_Source/tga-portal-prototype test",
+    "test:browser": "npm --prefix ./TGA_Member_Portal_Source/tga-portal-prototype run test:browser",
+    "dev": "npm --prefix ./TGA_Member_Portal_Source/tga-portal-prototype run dev"
   },
   "devDependencies": {
-    "wrangler": "4.112.0"
+    "wrangler": "^4.129.1"
   }
 }

@@ -1,0 +1,37 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Tga.Application;
+using Tga.Domain;
+namespace Tga.Infrastructure.Persistence;
+public class DemoDataSeeder(TgaDbContext db,UserManager<AppUser> users,RoleManager<IdentityRole> roles,IDocumentStorageService storage,IConfiguration config,TimeProvider clock) {
+ public static Guid Id(string value)=>new(SHA256.HashData(Encoding.UTF8.GetBytes(value)).AsSpan(0,16));
+ static string S(JsonElement x,string key)=>x.TryGetProperty(key,out var v)&&v.ValueKind!=JsonValueKind.Null?v.ToString():"";
+ public async Task SeedAsync(CancellationToken ct=default) {
+  if(await db.Members.AnyAsync(ct))return;
+  using var source=JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory,"Seeds","demo.json"),ct));var root=source.RootElement;var now=clock.GetUtcNow().UtcDateTime;var anchor=DateTime.Parse(root.GetProperty("seededUtc").GetString()!).ToUniversalTime();DateTime Date(JsonElement x,string key)=>string.IsNullOrEmpty(S(x,key))?now:now+(DateTime.Parse(S(x,key)).ToUniversalTime()-anchor);
+  foreach(var role in Roles.All)if(!await roles.RoleExistsAsync(role))await roles.CreateAsync(new IdentityRole(role));
+  var roleMap=new Dictionary<string,string>{{"member",Roles.Member},{"admin",Roles.SystemAdmin},{"membership",Roles.MembershipAdmin},{"verifier",Roles.DocumentVerifier},{"finance",Roles.Finance},{"assessor",Roles.Assessor},{"support",Roles.Support}};
+  var fixtures=root.GetProperty("users").EnumerateArray().ToArray();var accountMap=new Dictionary<string,AppUser>();
+  foreach(var fixture in fixtures) {var u=new AppUser{Id=Id(S(fixture,"id")).ToString(),UserName=S(fixture,"email"),Email=S(fixture,"email"),EmailConfirmed=true};if(S(fixture,"role")=="admin"&&config["DemoAdmin:Email"] is {} adminEmail)u.UserName=u.Email=adminEmail;var password=S(fixture,"role")=="admin"?config["DemoAdmin:Password"]??S(fixture,"password"):config["DemoMember:Password"]??S(fixture,"password");var result=await users.CreateAsync(u,password);if(!result.Succeeded)throw new InvalidOperationException("Demo account configuration invalid: "+string.Join(',',result.Errors.Select(e=>e.Code)));await users.AddToRoleAsync(u,roleMap[S(fixture,"role")]);if(S(fixture,"memberId")!="")accountMap[S(fixture,"memberId")]=u;}
+  foreach(var p in root.GetProperty("plans").EnumerateArray())db.Add(new MembershipPlan{Id=Id("plan-"+S(p,"name")),Name=S(p,"name"),Description="Illustrative annual sandbox plan",AnnualFee=p.GetProperty("annualFee").GetDecimal(),JoiningFee=0,DurationMonths=12});
+  var members=new Dictionary<string,MemberProfile>();
+  foreach(var m in root.GetProperty("members").EnumerateArray()) {var number=S(m,"id");if(!accountMap.TryGetValue(number,out var u)){u=new AppUser{Id=Id("user-"+number).ToString(),UserName=S(m,"email"),Email=S(m,"email"),EmailConfirmed=true};await users.CreateAsync(u,Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))+"Aa1!");await users.AddToRoleAsync(u,Roles.Member);}
+   var member=new MemberProfile{Id=Id(number),UserId=u.Id,MembershipNumber=number,FirstName=S(m,"firstName"),LastName=S(m,"lastName"),Email=u.Email!,MobileNumber=S(m,"mobile"),Province=S(m,"province"),Address=S(m,"address"),City=S(m,"city"),PostalCode=S(m,"postalCode"),IdentifierPlaceholder="DEMO-ONLY",UpdatedUtc=now};members[number]=member;db.Add(member);
+   var status=S(m,"status") switch{"Pending review"=>MembershipStatus.Pending,"Payment due"=>MembershipStatus.Expired,_=>Enum.Parse<MembershipStatus>(S(m,"status"))};var membership=new Membership{Id=Id("membership-"+number),MemberId=member.Id,MembershipPlanId=Id("plan-"+S(m,"plan")),Status=status,StartDate=S(m,"startDate")==""?null:Date(m,"startDate"),EndDate=S(m,"endDate")==""?null:Date(m,"endDate"),UpdatedUtc=now};db.Add(membership);if(status==MembershipStatus.Pending)db.Add(new MembershipApplication{Id=Id("application-"+number),MemberId=member.Id,MembershipPlanId=membership.MembershipPlanId,SubmittedUtc=now.AddDays(-3)});
+  }
+  foreach(var t in root.GetProperty("documentTypes").EnumerateArray())db.Add(new DocumentType{Id=Id("type-"+S(t,"id")),Name=S(t,"name"),Description="Optional fictional demo sample"});
+  foreach(var d in root.GetProperty("documents").EnumerateArray()){await using var sample=new MemoryStream(Encoding.UTF8.GetBytes("%PDF-1.4\n% TGA DEMO ONLY - NOT AN IDENTITY OR TRAINING DOCUMENT\n%%EOF"));var file=await storage.UploadAsync(sample,ct);db.Add(new MemberDocument{Id=Id(S(d,"id")),MemberId=members[S(d,"memberId")].Id,DocumentTypeId=Id("type-"+S(d,"type")),OriginalFileName="DEMO-"+Path.GetFileNameWithoutExtension(S(d,"name"))+".pdf",MimeType="application/pdf",SizeBytes=file.Size,StorageKey=file.Key,Checksum=file.Checksum,UploadedUtc=Date(d,"date"),Status=S(d,"status")=="In review"?DocumentStatus.PendingReview:Enum.Parse<DocumentStatus>(S(d,"status")),RejectionReason=S(d,"reason")});}
+  var assessments=new Dictionary<string,Assessment>();
+  foreach(var a in root.GetProperty("assessments").EnumerateArray()){var assessment=new Assessment{Id=Id(S(a,"id")),Title=S(a,"title"),Description=S(a,"description"),PassPercentage=80,MaxAttempts=3,UpdatedUtc=now};foreach(var q in a.GetProperty("questions").EnumerateArray()){var question=new Question{Id=Id(S(q,"id")),QuestionText=S(q,"text"),Points=1,SortOrder=assessment.Questions.Count};var correct=q.GetProperty("correct").GetInt32();var i=0;foreach(var option in q.GetProperty("options").EnumerateArray()){question.Options.Add(new QuestionOption{Id=Id(S(q,"id")+"-"+i),Text=option.GetString()!,SortOrder=i,IsCorrect=i==correct});i++;}assessment.Questions.Add(question);}db.Add(assessment);assessments[S(a,"id")]=assessment;}
+  foreach(var a in root.GetProperty("attempts").EnumerateArray())db.Add(new AssessmentAttempt{Id=Id(S(a,"id")),MemberId=members[S(a,"memberId")].Id,AssessmentId=assessments[S(a,"assessmentId")].Id,StartedUtc=Date(a,"startedUtc"),SubmittedUtc=Date(a,"submittedUtc"),Percentage=a.GetProperty("percentage").GetDecimal(),Score=a.GetProperty("passed").GetBoolean()?5:3,Passed=a.GetProperty("passed").GetBoolean(),Status=Enum.Parse<AttemptStatus>(S(a,"status")),PassPercentage=80});
+  foreach(var p in root.GetProperty("payments").EnumerateArray())db.Add(new PaymentTransaction{Id=Id(S(p,"id")),MemberId=members[S(p,"memberId")].Id,MembershipId=Id("membership-"+S(p,"memberId")),MerchantReference=S(p,"reference"),ProviderReference="seed-"+S(p,"id"),Amount=p.GetProperty("amount").GetDecimal(),Status=Enum.Parse<PaymentStatus>(S(p,"status")),PaymentType="AnnualMembership",PaidUtc=S(p,"status")=="Paid"?Date(p,"completedUtc"):null,FailureReason=S(p,"failureReason")});
+  foreach(var t in root.GetProperty("templates").EnumerateArray())db.Add(new NotificationTemplate{Id=Id("template-"+t.GetString()),TemplateKey=t.GetString()!,Content="TGA sandbox notification: "+t.GetString()+". No external communication is sent."});
+  foreach(var n in root.GetProperty("notifications").EnumerateArray())db.Add(new NotificationLog{RecipientUserId=members[S(n,"memberId")].UserId,TemplateKey=S(n,"title")});
+  foreach(var type in new[]{"PrivacyPolicy","TermsAndConditions","TestingDisclaimer"})db.Add(new PolicyDocument{Id=Id("policy-"+type),Type=type,EffectiveDate=now});
+  db.Add(new AuditEvent{TimestampUtc=now,Action="DemoSeeded",EntityType="Sandbox",EntityId="demo-v2",ActorRole="system",CorrelationId="seed"});await db.SaveChangesAsync(ct);
+ }
+}

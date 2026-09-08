@@ -1,0 +1,28 @@
+name: TGA sandbox verification
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+        working-directory: TGA_Member_Portal_Source/tga-portal-prototype
+      - run: npm run test:browser
+        env:
+          PLAYWRIGHT_CHANNEL: chromium
+      - run: dotnet tool restore
+      - run: dotnet test Tga.slnx --configuration Release
+      - run: dotnet ef migrations has-pending-model-changes --project src/Tga.Infrastructure --startup-project src/Tga.Api --context DemoDbContext
+      - run: dotnet ef migrations has-pending-model-changes --project src/Tga.Infrastructure --startup-project src/Tga.Api --context SqlServerDbContext
+      - run: docker build -t tga-api-sandbox .

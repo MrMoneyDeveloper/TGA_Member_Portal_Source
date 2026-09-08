@@ -31,6 +31,8 @@ await build({
     __TGA_SITE_URL__: JSON.stringify(siteUrl),
     __TGA_PUBLIC_INDEX__: JSON.stringify(publicIndex),
     __TGA_DEMO_MODE__: JSON.stringify(demoMode)
+    ,__TGA_API_BASE_URL__: JSON.stringify(String(process.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, ''))
+    ,__TGA_DATA_MODE__: JSON.stringify(process.env.TGA_FRONTEND_DATA_MODE === 'api' ? 'api' : 'demo')
   },
   loader: {
     '.jpg': 'file',
