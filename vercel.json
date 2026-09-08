@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "TGA_Member_Portal_Source/tga-portal-prototype/dist/client",
+  "framework": null,
+  "rewrites": [{"source": "/((?!.*\\.).*)", "destination": "/index.html"}],
+  "headers": [{"source": "/(.*)", "headers": [{"key": "X-Robots-Tag", "value": "noindex, nofollow"}, {"key": "X-Content-Type-Options", "value": "nosniff"}, {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"}]}]
+}

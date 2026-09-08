@@ -3,6 +3,7 @@ import './styles.css';
 import { publicConfig } from './config.js';
 import { chatTopics } from './data.js';
 import { createDemoApi, DEMO_ACCOUNTS } from './demo-api.js';
+import { createHttpApi } from './http-api.js';
 import { applicationContent, assessmentContent, loginTemplate, memberDetailContent, paymentContent, portalTemplate, uploadContent, reviewContent, assessmentConfigContent, date, money } from './portal-views.js';
 import { destroyViewEffects, flipCard, initialiseViewEffects } from './effects.js';
 import {
@@ -37,7 +38,7 @@ const storage = {
   }
 };
 
-const api = createDemoApi();
+const api = publicConfig.dataMode === 'api' ? createHttpApi(publicConfig.apiBaseUrl) : createDemoApi();
 const normalizePath = (path = '/') => '/' + String(path).replace(/^\/+|\/+$/g, '');
 const initialPath = normalizePath(window.location.pathname);
 const state = { screen: ['/login','/portal'].includes(initialPath)?'login':'public', publicPath: '/', authenticated:false, role:'member', active:'overview', memberQuery:'', memberStatus:'All statuses', members:[], documents:[], attempts:[], payments:[], assessments:[], notifications:[], history:[], audit:[], allowedSections:[], profile:null, user:null };
@@ -113,7 +114,7 @@ function restorePublicPosition(focusMain, preserveScroll) {
 function render({ preserveScroll = false, focusMain = false } = {}) {
   destroyViewEffects();
   if (state.screen === 'public') app.innerHTML = publicTemplate(state.publicPath, publicConfig.demoMode);
-  if (state.screen === 'login') app.innerHTML = loginTemplate(storage.get('tga-remember-email', ''), publicConfig.demoMode);
+  if (state.screen === 'login') app.innerHTML = loginTemplate(storage.get('tga-remember-email', ''), publicConfig.dataMode);
   if (state.screen === 'portal') app.innerHTML = portalTemplate(state, filteredMembers());
   document.body.dataset.screen = state.screen;
   updatePageMetadata();
@@ -253,7 +254,7 @@ document.addEventListener('click', async (event) => {
   if (action === 'forgot-password') showDialog('Demo password reminder','<form id="recovery-form" class="dialog-form"><p>This POC uses public demo credentials. Enter your demo login email for a reminder.</p><label>Email<input type="email" name="email" required></label><p class="form-error" data-form-error role="alert" hidden></p><button type="submit" class="button button--brass">Show demo reminder</button></form>');
   if (action === 'consulting') showNotice('Professional assistance','<div class="information-modal"><p>Verified consultation and booking details must be supplied by TGA. No request is sent.</p></div>');
   if (action === 'assessment') await runAction(actionTarget,async()=>{const attempt=await api.startAssessment(actionTarget.dataset.assessmentId||state.assessments[0]?.id);showDialog(attempt.title,assessmentContent(attempt));});
-  if (action === 'upload') showDialog('Upload a sample document',uploadContent());
+  if (action === 'upload') showDialog('Upload a sample document',uploadContent(publicConfig.dataMode));
   if (action === 'payment') await runAction(actionTarget,async()=>{const p=await api.checkout();showDialog('Mock payment checkout',paymentContent(p));});
   if (action === 'complete-payment') await runAction(actionTarget,async()=>{const p=await api.completePayment(actionTarget.dataset.paymentId,actionTarget.dataset.outcome);closeDialog();await refreshPortal();render();showNotice('Mock payment '+p.status,'<div class="success-state"><h3>'+escapeHtml(p.status)+'</h3><p>'+escapeHtml(p.reference)+' · '+money(p.amount)+'</p><p>No real money moved. The outcome is saved in Payment history.</p></div>');});
   if (action === 'chat') showDialog('TGA prototype assistant',chatContent());
@@ -263,7 +264,7 @@ document.addEventListener('click', async (event) => {
   if (action === 'open-documents') {state.active='documents';render();}
   if (action === 'reload-portal') await runAction(actionTarget,async()=>{await refreshPortal();render();});
   if (action === 'document-detail') await runAction(actionTarget,async()=>{const d=await api.document(actionTarget.dataset.documentId);showNotice('Demo document metadata','<div class="information-modal"><h3>'+escapeHtml(d.name)+'</h3><p>'+escapeHtml(d.type)+' · '+escapeHtml(d.status)+' · '+date(d.date)+'</p><p>'+escapeHtml(d.reason||'No review notes yet.')+'</p><p>Only metadata is stored. This download creates a fictional sample record, not the selected file.</p><button class="button button--outline" data-action="download-sample" data-document-id="'+escapeHtml(d.id)+'">Download demo record</button></div>');});
-  if (action === 'download-sample') await runAction(actionTarget,async()=>{const d=await api.document(actionTarget.dataset.documentId);downloadText('TGA-DEMO-document.txt','TGA DEMONSTRATION RECORD\nNOT AN IDENTITY, LICENCE OR TRAINING DOCUMENT\n\nName: '+d.name+'\nType: '+d.type+'\nStatus: '+d.status+'\nReference: '+d.id+'\nNo original file contents are stored.');});
+  if (action === 'download-sample') await runAction(actionTarget,async()=>{const d=await api.document(actionTarget.dataset.documentId);if(api.download){const blob=await api.download(d.id);downloadText(d.name,blob,blob.type);return;}downloadText('TGA-DEMO-document.txt','TGA DEMONSTRATION RECORD\nNOT AN IDENTITY, LICENCE OR TRAINING DOCUMENT\n\nName: '+d.name+'\nType: '+d.type+'\nStatus: '+d.status+'\nReference: '+d.id+'\nNo original file contents are stored.');});
   if (action === 'review-document') {const d=state.documents.find(d=>d.id===actionTarget.dataset.documentId);if(d)showDialog('Review demo document',reviewContent(d));}
   if (action === 'assessment-config') {const a=state.assessments.find(a=>a.id===actionTarget.dataset.assessmentId);if(a)showDialog('Assessment demo rules',assessmentConfigContent(a));}
   if (action === 'receipt') {const p=state.payments.find(p=>p.id===actionTarget.dataset.paymentId);if(p)downloadText(p.reference+'.txt','TGA MOCK RECEIPT — NO MONEY MOVED\n'+p.reference+'\n'+p.description+'\n'+money(p.amount)+'\n'+p.status+'\n'+date(p.createdUtc));}
@@ -361,15 +362,15 @@ document.addEventListener('submit', async (event) => {
     setFormError(form,'');const data=new FormData(form);const values=Object.fromEntries(data.entries());
     try {
       if(form.id==='login-form'){const user=await api.login(values.email,values.password);if(values.remember)storage.set('tga-remember-email',values.email);else storage.remove('tga-remember-email');await openPortal(user);}
-      if(form.id==='application-form'){const result=await api.register(values);siteDialogTitle.textContent='Demo application created';siteDialogContent.innerHTML='<div class="success-state"><h3>Your demo login is ready</h3><p>Application '+escapeHtml(result.memberId)+' is waiting for administrator review.</p><p>Email: <strong>'+escapeHtml(result.email)+'</strong><br>Demo password: <strong>'+escapeHtml(result.password)+'</strong></p><p>Saved only in this browser. No information was sent to TGA.</p><button class="button button--brass" data-action="login">Continue to login</button></div>';}
+      if(form.id==='application-form'){const result=await api.register(values);siteDialogTitle.textContent='Demo application created';siteDialogContent.innerHTML='<div class="success-state"><h3>Your demo login is ready</h3><p>Application '+escapeHtml(result.memberId)+' is waiting for administrator review.</p><p>Email: <strong>'+escapeHtml(result.email)+'</strong><br>Demo password: <strong>'+escapeHtml(result.password)+'</strong></p><p>Saved in the selected demo data mode. No external message was sent.</p><button class="button button--brass" data-action="login">Continue to login</button></div>';}
       if(form.id==='profile-form'){await api.updateProfile(values);await refreshPortal();render();toast('Demo profile saved.','success');}
-      if(form.id==='upload-form'){const file=data.get('file');if(!(file instanceof File)||!file.name)throw new Error('Select a sample file.');if(!values.uploadConsent)throw new Error('Accept local metadata processing.');await api.upload({name:file.name,type:values.type,mime:file.type,sizeBytes:file.size});closeDialog();await refreshPortal();render();toast('Document submitted for demo review.','success');}
+      if(form.id==='upload-form'){const file=data.get('file');if(!(file instanceof File)||!file.name)throw new Error('Select a sample file.');if(!values.uploadConsent)throw new Error('Accept local metadata processing.');await api.upload({file,name:file.name,type:values.type,mime:file.type,sizeBytes:file.size});closeDialog();await refreshPortal();render();toast('Document submitted for demo review.','success');}
       if(form.id==='assessment-form'){const answers=Object.fromEntries([...data.entries()].map(([key,value])=>[key,Number(value)]));const result=await api.submitAssessment(form.dataset.attemptId,answers);closeDialog();await refreshPortal();render();showNotice('Assessment result','<div class="success-state"><h3>'+result.percentage+'% · '+escapeHtml(result.status)+'</h3><p>Result saved. This is a demo learning check, not accredited training or firearm competency.</p></div>');}
       if(form.id==='membership-review-form'){await api.changeMembership(form.dataset.memberId,values.status,values.reason);closeDialog();await refreshPortal();render();toast('Membership decision saved.','success');}
       if(form.id==='document-review-form'){await api.reviewDocument(form.dataset.documentId,values.decision==='approve',values.reason);closeDialog();await refreshPortal();render();toast('Document review saved.','success');}
       if(form.id==='assessment-config-form'){await api.configureAssessment(form.dataset.assessmentId,{passMark:Number(values.passMark),maxAttempts:Number(values.maxAttempts),timeLimitMinutes:values.timeLimitMinutes?Number(values.timeLimitMinutes):null});closeDialog();await refreshPortal();render();toast('Demo assessment rules saved.','success');}
       if(form.id==='refund-form'){await api.refund(form.dataset.paymentId,values.reason);closeDialog();await refreshPortal();render();toast('Mock refund recorded.','success');}
-      if(form.id==='recovery-form'){const result=await api.recover(values.email);siteDialogContent.innerHTML='<div class="information-modal"><p>'+ (result?'Public demo login: '+escapeHtml(result.email)+'<br>Password: <strong>'+escapeHtml(result.password)+'</strong>':'No demo account found. Choose an account from the login register.')+'</p><p>No email was sent.</p></div>';}
+      if(form.id==='recovery-form'){const result=await api.recover(values.email);siteDialogContent.innerHTML='<div class="information-modal"><p>'+ (result?'Public demo login: '+escapeHtml(result.email)+'<br>Password: <strong>'+escapeHtml(result.password)+'</strong>':(publicConfig.dataMode==='api'?'A recovery request has been recorded if the account exists. Sandbox email is simulated; ask the administrator for a reset token.':'No demo account found. Choose an account from the login register.'))+'</p><p>No email was sent.</p></div>';}
       if(form.id==='support-form'){const ticket=await api.support(values.message);closeDialog();await refreshPortal();render();toast('Demo ticket '+ticket.id+' recorded. No message sent.','success');}
     }catch(error){setFormError(form,error.message);toast(error.message,'warning');}
     finally {if(submit){submit.disabled=false;submit.removeAttribute('aria-busy');}}

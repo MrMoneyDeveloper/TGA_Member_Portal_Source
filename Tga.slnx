@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Tga.Api/Tga.Api.csproj" />
+    <Project Path="src/Tga.Application/Tga.Application.csproj" />
+    <Project Path="src/Tga.Domain/Tga.Domain.csproj" />
+    <Project Path="src/Tga.Infrastructure/Tga.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tga.IntegrationTests/Tga.IntegrationTests.csproj" />
+    <Project Path="tests/Tga.UnitTests/Tga.UnitTests.csproj" />
+  </Folder>
+</Solution>
