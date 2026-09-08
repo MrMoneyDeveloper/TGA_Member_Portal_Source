@@ -1,0 +1,69 @@
+/* Official TGA wordmark overrides.
+   The source artwork is supplied by TGA and replaces the prototype mark visually. */
+.brand {
+  gap: 0;
+}
+
+.brand > span {
+  display: none;
+}
+
+.brand img,
+.boot-screen img {
+  content: url('/tga-logo.webp');
+  object-fit: contain;
+}
+
+.brand img {
+  width: auto;
+  height: 56px;
+  max-width: 180px;
+}
+
+.public-header .brand img {
+  height: 54px;
+  max-width: 172px;
+}
+
+.public-footer .brand img {
+  height: 76px;
+  max-width: 240px;
+}
+
+.login-brand .brand img {
+  height: 84px;
+  max-width: min(300px, 72vw);
+}
+
+.portal-sidebar .brand img {
+  height: 54px;
+  max-width: 168px;
+}
+
+.portal-topbar .brand img {
+  height: 42px;
+  max-width: 132px;
+}
+
+.portal-drawer .brand img {
+  height: 52px;
+  max-width: 164px;
+}
+
+.boot-screen img {
+  width: min(520px, 76vw);
+  height: auto;
+  max-width: 76vw;
+}
+
+@media (max-width: 760px) {
+  .public-header .brand img {
+    height: 48px;
+    max-width: 150px;
+  }
+
+  .login-brand .brand img {
+    height: 68px;
+    max-width: min(240px, 70vw);
+  }
+}
