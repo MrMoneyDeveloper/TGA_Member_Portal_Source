@@ -16,7 +16,13 @@ services:
         value: Console
       - key: TGA_SMS_MODE
         value: Console
+      - key: ConnectionStrings__Demo
+        value: Data Source=data/tga.db
+      - key: Storage__Path
+        value: data/documents
       - key: Jwt__Key
         generateValue: true
+      - key: Jwt__AccessTokenMinutes
+        value: "120"
       - key: AllowedOrigins__0
         sync: false
