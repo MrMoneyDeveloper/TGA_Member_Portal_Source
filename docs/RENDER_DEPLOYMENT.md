@@ -1,39 +1,167 @@
-# Render backend and Vercel frontend handover
+# TGA sandbox deployment handover
 
-The user will create and connect hosting services. No live deployment is claimed.
+This repository is prepared for a split sandbox deployment:
 
-## Standalone frontend first
+- **Frontend:** Vercel static deployment from the repository root.
+- **Backend:** Render Docker web service from the repository root.
+- **Sandbox database:** EF Core SQLite under `data/tga.db`.
+- **Sandbox document storage:** local filesystem under `data/documents`.
+- **Payments:** mock provider only.
+- **Email/SMS:** console/database notification providers only.
 
-Import this repository into Vercel with repository root as the root directory. `vercel.json` defines the build and output directory. Leave `TGA_FRONTEND_DATA_MODE=demo`; no API URL is required. All demonstrated workflows use local browser fixtures. Public demo accounts are in [DEMO_ACCOUNTS.md](DEMO_ACCOUNTS.md).
+No production deployment is claimed by this document.
 
-Build: `npm run build`. Output: `TGA_Member_Portal_Source/tga-portal-prototype/dist/client`. The existing Cloudflare worker remains available as an alternative deployment target.
+## 1. Deploy the frontend to Vercel
 
-## Connect the backend
+Import `MrMoneyDeveloper/TGA_Member_Portal_Source` into Vercel and keep the **repository root** as the Vercel Root Directory.
 
-1. Create a Render web service from this repository and the root Dockerfile, or use `render.yaml` as a Blueprint.
-2. Set `ASPNETCORE_ENVIRONMENT=Sandbox`, `TGA_DATA_MODE=Demo`, `TGA_PAYMENT_MODE=Mock`, `TGA_EMAIL_MODE=Console`, `TGA_SMS_MODE=Console`.
-3. Generate `Jwt__Key` (32+ random bytes). Set `AllowedOrigins__0` to the exact HTTPS Vercel origin, without a trailing slash. Add additional allowed origins only if needed.
-4. Keep the documented public demo passwords for a client POC, or set `DemoAdmin__Email`, `DemoAdmin__Password`, and `DemoMember__Password` before the first seed. Do not set blank password overrides. Overrides do not modify existing accounts; reset the disposable demo database if needed.
-5. Deploy the API. Check `https://YOUR-API.onrender.com/health/ready` and `/swagger`.
-6. In Vercel set `TGA_FRONTEND_DATA_MODE=api` and `VITE_API_BASE_URL=https://YOUR-API.onrender.com`, then rebuild/redeploy the frontend.
-7. Sign in and test profile, document, assessment, payment, admin approval, and logout.
+The committed `vercel.json` supplies:
 
-The app binds to Render's `PORT` on `0.0.0.0`. Health checks query the database. SQLite seeds automatically when absent and the default filesystem is disposable. Sleep/cold starts can delay the first request; frontend errors include a retry prompt.
+- Build command: `npm run build`
+- Output directory: `TGA_Member_Portal_Source/tga-portal-prototype/dist/client`
+- SPA rewrite to `index.html`
+- `noindex, nofollow` sandbox headers
 
-## Cookies and proxies
+For the first deployment, use these Vercel environment variables:
 
-Access tokens are memory-only. Refresh uses rotating Secure/HttpOnly/SameSite=None cookies in Sandbox. Some browsers block third-party cookies between `vercel.app` and `onrender.com`; sign-in can work while refresh fails. Use sibling custom domains under the same site, or a reviewed same-origin reverse proxy, for reliable long-lived sessions. There is no localStorage token fallback.
+```text
+TGA_FRONTEND_DATA_MODE=demo
+DEMO_MODE=true
+PUBLIC_INDEX=false
+```
 
-Forwarded headers are accepted only from configured `TrustedProxies__0`, etc. Configure actual trusted proxy addresses if client IP attribution is required. Secure cookie settings do not depend on trusting arbitrary forwarding headers.
+`VITE_API_BASE_URL` and `SITE_URL` can be left unset for this first standalone deployment.
 
-## Reset and persistence
+The standalone frontend uses browser fixtures and does not require Render to exist yet.
 
-Browser POC: Administrator → Demo controls → Reset demo records.
+## 2. Deploy the backend to Render
 
-Backend: stop the service and replace only its disposable SQLite database/file storage under its configured data directory, then restart. On ephemeral Render storage a fresh redeploy may reset data. There is intentionally no HTTP endpoint that deletes the database. Preserve production data separately; never use this reset procedure on production.
+Preferred route: create a **Render Blueprint** from the repository's root `render.yaml`.
 
-## URLs after your deployment
+The Blueprint already defines:
 
-Frontend: your assigned Vercel URL. API: your assigned Render URL. Readiness: API URL + `/health/ready`. Swagger: API URL + `/swagger`. Actual live URLs cannot be supplied until you create these services.
+```text
+ASPNETCORE_ENVIRONMENT=Sandbox
+TGA_DATA_MODE=Demo
+TGA_PAYMENT_MODE=Mock
+TGA_EMAIL_MODE=Console
+TGA_SMS_MODE=Console
+ConnectionStrings__Demo=Data Source=data/tga.db
+Storage__Path=data/documents
+Jwt__AccessTokenMinutes=120
+```
 
-Reference: [Render Docker](https://render.com/docs/docker), [port binding](https://render.com/docs/web-services#port-binding).
+It also generates `Jwt__Key` automatically.
+
+During initial Blueprint creation Render will prompt for:
+
+```text
+AllowedOrigins__0
+```
+
+Set it to the **exact Vercel HTTPS origin with no trailing slash**, for example:
+
+```text
+https://tga-member-portal.vercel.app
+```
+
+If you create a Render Web Service manually instead of using the Blueprint, use the root `Dockerfile` and add the same environment values yourself. In that case, also generate a fresh random `Jwt__Key` containing at least 32 bytes.
+
+The API reads Render's `PORT` environment variable and binds on `0.0.0.0`. Do not hardcode a Render port in the dashboard.
+
+## 3. Verify Render before connecting the frontend
+
+After Render reports a successful deployment, verify:
+
+```text
+https://YOUR-API.onrender.com/health
+https://YOUR-API.onrender.com/health/ready
+https://YOUR-API.onrender.com/swagger
+```
+
+`/health/ready` must return a successful response before switching Vercel into API mode.
+
+On first startup the sandbox automatically applies the SQLite migrations and seeds fictional demo records.
+
+## 4. Connect Vercel to Render
+
+In Vercel, change/add:
+
+```text
+TGA_FRONTEND_DATA_MODE=api
+VITE_API_BASE_URL=https://YOUR-API.onrender.com
+DEMO_MODE=true
+PUBLIC_INDEX=false
+```
+
+Then redeploy Vercel. These values are consumed at build time.
+
+The build intentionally fails if `TGA_FRONTEND_DATA_MODE=api` is selected without a valid `VITE_API_BASE_URL`. This prevents a successful-looking deployment with a dead backend connection.
+
+## 5. Sandbox smoke test
+
+After the Vercel redeploy, verify at minimum:
+
+1. Open the public site.
+2. Open member login.
+3. Sign in with one of the fictional accounts in `DEMO_ACCOUNTS.md`.
+4. Load the member dashboard.
+5. View membership details.
+6. Upload a small demo PDF/image.
+7. Complete a demo assessment.
+8. Run the mock renewal/payment workflow.
+9. Sign out.
+10. Sign in as Administrator.
+11. Open the member register and dashboard metrics.
+12. Review a demo document/application.
+
+## Authentication note for vercel.app + onrender.com
+
+Access tokens remain in browser memory. Refresh tokens use rotating Secure/HttpOnly/SameSite=None cookies.
+
+Some privacy-focused browsers can block third-party cookies between `vercel.app` and `onrender.com`. The sandbox therefore uses a configurable **120-minute access-token lifetime** so a normal client presentation does not depend on refresh succeeding every ten minutes.
+
+The preferred long-term configuration is sibling custom domains such as:
+
+```text
+portal.thegunassociation.co.za
+api.thegunassociation.co.za
+```
+
+Production should return to a shorter reviewed access-token lifetime.
+
+## Render Free persistence warning
+
+Render Free web services use an **ephemeral filesystem**. Local SQLite changes and uploaded files can be lost when the service spins down, restarts, or redeploys. A Free web service can also spin down after inactivity.
+
+That is acceptable for this disposable stakeholder sandbox because seed data is recreated automatically, but it means **client-created changes/uploads are not durable**.
+
+If the client needs a stable sandbox whose changes survive idle periods/redeployments, move the Render API to a paid service with a persistent disk or replace the demo persistence strategy with a durable external store.
+
+## Demo accounts and secrets
+
+Public fictional demo accounts are documented in `DEMO_ACCOUNTS.md`.
+
+Optional Render overrides:
+
+```text
+DemoAdmin__Email
+DemoAdmin__Password
+DemoMember__Password
+```
+
+Do not set blank password overrides. Do not place any real customer/member information in this sandbox.
+
+## Production boundary
+
+The application intentionally rejects `ASPNETCORE_ENVIRONMENT=Production` while mock/demo adapters remain installed. Production requires reviewed implementations/configuration for:
+
+- Microsoft SQL Server
+- durable secure document storage
+- malware/file scanning
+- PayFast production integration
+- transactional email
+- SMS/OTP
+- production security/session configuration
+
+See `OPEN_BUSINESS_DECISIONS.md` for unresolved client rules.

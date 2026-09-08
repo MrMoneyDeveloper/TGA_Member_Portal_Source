@@ -9,7 +9,13 @@ const rawSiteUrl = String(process.env.SITE_URL || '').trim().replace(/\/$/, '');
 const siteUrl = /^https?:\/\//.test(rawSiteUrl) ? rawSiteUrl : '';
 const publicIndex = process.env.PUBLIC_INDEX === 'true' && Boolean(siteUrl);
 const demoMode = process.env.DEMO_MODE !== 'false';
+const dataMode = process.env.TGA_FRONTEND_DATA_MODE === 'api' ? 'api' : 'demo';
+const apiBaseUrl = String(process.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
 const publicRoutes = ['/', '/about', '/membership', '/training', '/resources', '/contact'];
+
+if (dataMode === 'api' && !/^https?:\/\//.test(apiBaseUrl)) {
+  throw new Error('TGA_FRONTEND_DATA_MODE=api requires VITE_API_BASE_URL to be a full http(s) URL, for example https://your-api.onrender.com');
+}
 
 await rm(outdir, { recursive: true, force: true });
 await mkdir(clientDir, { recursive: true });
@@ -30,9 +36,9 @@ await build({
   define: {
     __TGA_SITE_URL__: JSON.stringify(siteUrl),
     __TGA_PUBLIC_INDEX__: JSON.stringify(publicIndex),
-    __TGA_DEMO_MODE__: JSON.stringify(demoMode)
-    ,__TGA_API_BASE_URL__: JSON.stringify(String(process.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, ''))
-    ,__TGA_DATA_MODE__: JSON.stringify(process.env.TGA_FRONTEND_DATA_MODE === 'api' ? 'api' : 'demo')
+    __TGA_DEMO_MODE__: JSON.stringify(demoMode),
+    __TGA_API_BASE_URL__: JSON.stringify(apiBaseUrl),
+    __TGA_DATA_MODE__: JSON.stringify(dataMode)
   },
   loader: {
     '.jpg': 'file',
@@ -74,4 +80,4 @@ if (publicIndex) {
 
 await mkdir(path.join(outdir, 'server'), { recursive: true });
 await cp(path.join(root, 'src', 'worker.js'), path.join(outdir, 'server', 'index.js'));
-console.log(`TGA frontend built in dist/client (${publicIndex ? 'indexable production' : 'private noindex'} mode).`);
+console.log(`TGA frontend built in dist/client (${publicIndex ? 'indexable production' : 'private noindex'} mode; data=${dataMode}).`);
