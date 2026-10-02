@@ -1,5 +1,7 @@
 # The Gun Association member experience
 
+> **Current implementation:** start with the [repository README](../../README.md) and [handover](../../docs/HANDOVER.md). The frontend now has persistent browser demo workflows, nine public logins, and an optional ASP.NET Core API adapter. The original prototype notes below describe the earlier design baseline; use the root documentation for current setup, credentials, test results and deployment instructions.
+
 A mobile-first static prototype for a South African firearm association. It demonstrates a professional public website, membership application, exact demo login, member portal, administrator CRM, assessments, document metadata, payment journeys and a guarded support assistant.
 
 The experience promotes responsible ownership, safety, secure storage, training and lawful compliance. It is not a firearm store, accredited course platform, legal-advice service or production member system.

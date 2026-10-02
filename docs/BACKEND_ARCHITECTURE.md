@@ -20,19 +20,19 @@ The application lives in `TGA_Member_Portal_Source/tga-portal-prototype`. It is 
 
 .NET 10 controllers in Tga.Api; plain entities and rules in Tga.Domain; DTOs/service contracts in Tga.Application; EF Core, Identity and provider implementations in Tga.Infrastructure. SQLite Demo and SQL Server use the same business operations, with provider-specific migration contexts. Controllers enforce policies and record ownership. Business workflows use transactions, concurrency tokens and UTC TimeProvider.
 
-Authentication uses short-lived bearer access tokens kept in browser memory, hashed rotating refresh tokens in HttpOnly cookies and server-side role policies. Cross-origin cookie requests require an explicit allowed Origin. Deployment must use HTTPS; development cookies permit localhost HTTP. No demo passwords enter the JavaScript bundle.
+API authentication uses bearer access tokens kept in browser memory, hashed rotating refresh tokens in HttpOnly cookies and server-side role policies. Development defaults to 10-minute access tokens; Sandbox defaults to a configurable 120 minutes for presentations. Cross-origin cookie requests require an explicit allowed Origin. Deployment must use HTTPS; development cookies permit localhost HTTP. Following the user's POC clarification, public fictional demo passwords are intentionally included in the browser login register; production credentials must never be bundled.
 
 Uploads are private, validated by extension, MIME, signature and size and downloaded through authorized endpoints. A sandbox scanner is explicitly a no-op; production must configure a real scanner/storage adapter. Payments start with server-priced Mock checkout; PayFast is isolated behind IPaymentGateway. No card details are collected. Assessment answers are scored on the server; member DTOs exclude answer keys.
 
 ## Demo and production strategy
 
-Seed fictional example.com users and scenarios only in Demo mode outside Production. Passwords come from environment variables. SQLite and temporary files are disposable sandbox infrastructure. SQL Server is configured by environment and deployed using explicit EF migrations, never deletion/recreation at production startup. Production adapters and client-approved policy content remain required before production enablement.
+Seed fictional users and scenarios only in Demo mode outside Production. Public demo passwords are documented in DEMO_ACCOUNTS.md and may be overridden by environment variables. SQLite and temporary files are disposable sandbox infrastructure. SQL Server is configured by environment and deployed using explicit EF migrations, never deletion/recreation at production startup. Production adapters and client-approved policy content remain required before production enablement.
 
 ## Assumptions and conflicts
 
 The frontend is not React/Vite, so its current esbuild pipeline is retained. Existing R450/R750 annual fees are illustrative configurable seed defaults. Existing firearm-related assessment questions are replaced with explicitly fictional portal-learning content, not accredited competency. Misleading browser-only privacy statements must change because data will now reach the sandbox API. Support/chat remain local scripted guidance, outside backend scope. All document types are optional demo types. Annual duration is 12 months; manual renewal and admin approval are demo rules, pending client confirmation.
 
-Deployment authorization is included in the plan. Actual Render/Vercel account access and a Docker runtime are not yet established; configuration alone will not be reported as a live deployment.
+The user's follow-up leaves Render/Vercel deployment and connection to the owner. The Docker build and tests have passed in Linux CI; configuration and a successful image build are not reported as a live deployment. See HANDOVER.md for delivered behavior, verification evidence and remaining work.
 
 ## References
 
