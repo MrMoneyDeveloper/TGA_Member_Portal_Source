@@ -1,5 +1,12 @@
 # TGA Member Platform
 
+## Technical handover and dependencies
+
+- [Technical handover](HANDOVER.md): ownership, setup, credential rotation, verification and recovery.
+- [Dependency and API/OAuth configuration list](DEPENDENCIES.md): runtime, external services and configuration inventory.
+
+**Handover requirement:** all API/OAuth credentials and related shared/deployment secrets in use must be rotated or reissued, configured and tested under the receiving owner. Completion must be recorded; these documentation changes do not rotate live credentials.
+
 Client demonstration of The Gun Association member and administration platform. The existing public website, visual design and navigation are retained. The repository supports two data modes:
 
 | Mode | What runs | Persistence |
